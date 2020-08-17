@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+const { program } = require('commander')
+const scaffoldizerPackageJson = require('../package.json')
+const commands = require('../commands')
+// const globals = require('./globals')
+
+main()
+
+async function main () {
+  //
+  // Set the version depending on package.json
+  program.version(scaffoldizerPackageJson.version)
+
+  // The main command: addss
+  program
+    .command('add <scaffold> <module> <dstDir>')
+    .description('Add scaffold module <module> to <dstDir>')
+    .action(commands.add)
+
+  await program.parseAsync(process.argv)
+}

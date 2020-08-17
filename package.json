@@ -1,0 +1,49 @@
+{
+  "name": "scaffoldizer",
+  "version": "0.0.1",
+  "description": "Modular scaffold creation",
+  "bin": {
+    "js-kit": "./bin/scaffoldizer"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": "10.x.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mobily-enterprises/scaffoldizer.git"
+  },
+  "keywords": [
+    "scaffold"
+  ],
+  "author": "Tony Mobily",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/mobily-enterprises/scaffoldizer/issues"
+  },
+  "dependencies": {
+    "commander": "^6.0.0",
+    "fs-extra": "^9.0.1",
+    "get-value": "^3.0.1",
+    "json-stable-stringify": "^1.0.1",
+    "pkg-up": "^3.1.0",
+    "recursive-copy": "^2.0.10",
+    "replace-in-file": "^6.1.0",
+    "set-value": "^3.0.2",
+    "unset-value": "^1.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.4.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-html": "^6.0.2",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-lit": "^1.2.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "standard": "^14.3.4"
+  },
+  "homepage": "https://github.com/mobily-enterprises/scaffoldizer#readme"
+}

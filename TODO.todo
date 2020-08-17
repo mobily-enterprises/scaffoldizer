@@ -1,0 +1,27 @@
+TODO
+✔ Add command in .bin to install sub-package from directory @done(2020-08-17 10:33)
+✔ Add executable which will be run by each file on postinstall, module name as parameter @done(2020-08-17 10:33)
+✔ Add way to copy files over to main repo @done(2020-08-17 10:33)
+✔ Add way to add which packages will be added to the main repo @done(2020-08-17 10:33)
+✔ Duplicate dependencies code to devDependencies @done(2020-08-17 10:33)
+✔ Allow string injection in kit.json (from "injections" folder, referenced in kit.json) @done(2020-08-17 10:33)
+✔ Change module.json format so that it's generic, make it work @done(2020-08-17 10:33)
+☐ Enable EJS in values, resolve all value strings as EJS
+☐ Allow input for variables, with script execution with prompts
+☐ Allow running of post-install, post-manipulation functions with access to all variables and library functions
+☐ Allow passing URL rather than directory as SRC
+☐ server
+  ☐ write initial server (server directory, change 'start' in main package.json)
+  ☐ Add readline-sync questions for DB setup (use post-install.sh in scripts)
+  ☐ Make sure basic open-wc app runs
+☐ client
+  ☐ write base client app that will work with es-dev-server. with routes etc.)
+☐ Add initial docco documentation generation
+☐ Make list of all missing "kits" to be added
+☐ Add missing kits
+
+TEST:
+rm -rf ~/jsk/this-app/testing-app; cp -pr ~/jsk/this-app/testing-app.SRC ~/jsk/this-app/testing-app; ./bin/scaffoldizer add ../js-kit server ~/jsk/this-app/testing-app
+
+
+rm -rf testing-app; cp -pr testing-app.SRC testing-app; cd testing-app;node ~merc/Development/js-kit/bin/kit.js add server
