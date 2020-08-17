@@ -2,6 +2,7 @@ const fs = require('fs-extra')
 const path = require('path')
 const utils = require('../lib/utils')
 const stringify = require('json-stable-stringify')
+const prompts = require('prompts')
 
 exports = module.exports = async (scaffold, module, dstDir) => {
   // Destination directory must exist
@@ -41,6 +42,7 @@ exports = module.exports = async (scaffold, module, dstDir) => {
   const dstScaffoldizerRemotesDir = path.join(dstScaffoldizerDir, 'remoteScaffolds')
   fs.ensureDirSync(dstScaffoldizerRemotesDir)
 
+  const userInput = {}
   installModule(module)
 
   async function installModule (module) {
@@ -68,13 +70,6 @@ exports = module.exports = async (scaffold, module, dstDir) => {
     }
     const modulePackageJsonValues = fs.readJsonSync(modulePackageJson)
 
-    const deps = modulePackageJsonValues.moduleDependencies || []
-    if (deps.length) console.log('This module has dependencies. Installing them.', deps)
-    for (const moduleName of deps) {
-      installModule(moduleName)
-    }
-    if (deps.length) console.log('Dependencies installed.', deps)
-
     const config = {
       moduleDir,
       moduleInstallFile,
@@ -82,8 +77,32 @@ exports = module.exports = async (scaffold, module, dstDir) => {
       dstScaffoldizerInstalledDir,
       dstScaffoldizerRemotesDir,
       dstPackageJsonValues,
-      scaffoldPackageJsonValues
+      scaffoldPackageJsonValues,
+      modulePackageJsonValues,
+      userInput
     }
+
+    // Include code
+    const moduleCode = path.join(moduleDir, 'code.js')
+    let moduleCodeFunctions = {}
+    if (fs.existsSync(moduleCode)) {
+      moduleCodeFunctions = require(path.resolve(moduleCode))
+    }
+
+    if (moduleCodeFunctions.getPrompts) {
+      const $p = moduleCodeFunctions.getPrompts(config)
+      let $h
+      if (moduleCodeFunctions.getPromptsHeading) $h = moduleCodeFunctions.getPromptsHeading()
+      if ($h) console.log($h)
+      userInput[module] = await prompts($p)
+    }
+
+    const deps = modulePackageJsonValues.moduleDependencies || []
+    if (deps.length) console.log('This module has dependencies. Installing them.', deps)
+    for (const moduleName of deps) {
+      installModule(moduleName)
+    }
+    if (deps.length) console.log('Dependencies installed.', deps)
 
     // Actually installing the module!
     console.log('Installing:', module)
@@ -133,7 +152,7 @@ exports = module.exports = async (scaffold, module, dstDir) => {
         continue
       }
       contents = await utils.manipulateJson(contents, listOfManipulations, config)
-      fs.writeFileSync(path.join(dstDir, fileRelativePath), stringify(contents, { space: 2 } ))
+      fs.writeFileSync(path.join(dstDir, fileRelativePath), stringify(contents, { space: 2 }))
       // fs.writeJsonSync(path.join(dstDir, fileRelativePath), contents, { spaces: 2 })
     }
 
