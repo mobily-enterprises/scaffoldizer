@@ -1,0 +1,8 @@
+{
+   "name":"base",
+   "description":"Example of base module, on which some other module will depend on",
+   "version":"1.0.0",
+   "author":"Tony Mobily",
+   "kitDependencies":[
+   ]
+}
