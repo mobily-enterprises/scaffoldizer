@@ -6,6 +6,7 @@
    "moduleDependencies":[
       "base"
    ],
+   "showInMenu": true,
    "manipulate":{
       "json":{
          "package.json":[
@@ -17,11 +18,21 @@
             {
                "op":"set",
                "key":"dependencies.DEP1",
-               "value":"3.1.0"
+               "value":"3.1.6"
             },
             {
                "op":"unset",
                "key":"scripts.start:build"
+            },
+            {
+               "op":"push",
+               "key":"caz",
+               "value": 1
+            },
+            {
+               "op":"pull",
+               "key":"caz",
+               "value": 3
             }
          ]
       },
@@ -45,8 +56,8 @@
             },
             {
                "op":"replace",
-               "from":"a",
-               "to":"b"
+               "from":"A",
+               "to":"B"
             }
          ]
       }

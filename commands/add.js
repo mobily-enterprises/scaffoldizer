@@ -4,7 +4,7 @@ const utils = require('../lib/utils')
 const stringify = require('json-stable-stringify')
 const prompts = require('prompts')
 
-exports = module.exports = async (scaffold, module, dstDir) => {
+exports = module.exports = async (scaffold, dstDir, module) => {
   // Destination directory must exist
   if (!utils.isDir(dstDir)) {
     console.error('Could not find destination dir:', dstDir)
@@ -43,6 +43,34 @@ exports = module.exports = async (scaffold, module, dstDir) => {
   fs.ensureDirSync(dstScaffoldizerRemotesDir)
 
   const userInput = {}
+
+  // No module passed: let the user decide
+  if (!module) {
+    const choices = []
+    const scaffoldModulesDir = path.join(scaffoldDir, 'modules')
+    const moduleDirs = fs.readdirSync(scaffoldModulesDir, { withFileTypes: true })
+    for (const dirEnt of moduleDirs) {
+      if (dirEnt.isDirectory()) {
+        console.log(dirEnt.name)
+        const modulePackageJsonValues = fs.readJsonSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json'))
+        if (modulePackageJsonValues.showInMenu) {
+          choices.push({
+            title: modulePackageJsonValues.name,
+            description: modulePackageJsonValues.description,
+            value: modulePackageJsonValues.name
+          })
+        }
+      }
+    }
+
+    module = (await prompts({
+      type: 'select',
+      name: 'value',
+      message: 'pick a module to install',
+      choices
+    })).value
+  }
+
   installModule(module)
 
   async function installModule (module) {

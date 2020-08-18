@@ -1,6 +1,11 @@
 {
+  "caz": [
+    1,
+    2,
+    1
+  ],
   "dependencies": {
-    "DEP1": "3.1.0"
+    "DEP1": "3.1.6"
   },
   "scripts": {
     "start": "node server/www"
