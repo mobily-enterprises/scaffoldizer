@@ -12,19 +12,3 @@ TODO
 ✔ Allow passing NPM package rather than directory as SRC for scaffolding @done(2020-08-18 08:07)
 ✔ Write one complete module file with all features as starting point for use and documentation @done(2020-08-18 08:34)
 ✔ Finish off commands in utils @done(2020-08-18 12:17)
-☐ server
-  ☐ write initial server (server directory, change 'start' in main package.json)
-  ☐ Add readline-sync questions for DB setup (use post-install.sh in scripts)
-  ☐ Make sure basic open-wc app runs
-☐ client
-  ☐ write base client app that will work with es-dev-server. with routes etc.)
-☐ Add initial docco documentation generation
-☐ Make list of all missing "kits" to be added
-☐ Add missing kits
-
-TEST:
-rm -rf ./example-result; mkdir example-result;echo \{\} > example-result/package.json;  node ./bin/scaffoldizer add ./example something ./example-result
-
-OLD TEST COMMANDS:
-rm -rf ~/jsk/this-app/testing-app; cp -pr ~/jsk/this-app/testing-app.SRC ~/jsk/this-app/testing-app; ./bin/scaffoldizer add ../js-kit server ~/jsk/this-app/testing-app
-rm -rf testing-app; cp -pr testing-app.SRC testing-app; cd testing-app;node ~merc/Development/js-kit/bin/kit.js add server
