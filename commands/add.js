@@ -47,7 +47,7 @@ exports = module.exports = async (scaffold, module, dstDir) => {
 
   async function installModule (module) {
     const moduleDir = path.join(scaffoldDir, 'modules', module)
-    const moduleInstallFile = path.join(dstScaffoldizerInstalledDir, 'moduleName')
+    const moduleInstallFile = path.join(dstScaffoldizerInstalledDir, module)
 
     // Check if module is available
     if (!utils.isDir(moduleDir)) {
@@ -101,8 +101,8 @@ exports = module.exports = async (scaffold, module, dstDir) => {
 
     const deps = modulePackageJsonValues.moduleDependencies || []
     if (deps.length) console.log('This module has dependencies. Installing them.', deps)
-    for (const moduleName of deps) {
-      installModule(moduleName)
+    for (const module of deps) {
+      installModule(module)
     }
     if (deps.length) console.log('Dependencies installed.', deps)
 

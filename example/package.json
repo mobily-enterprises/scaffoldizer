@@ -1,0 +1,6 @@
+{
+  "name": "scaffoldizer-example",
+  "description": "An example scaffold",
+  "version": "0.0.1",
+  "forScaffoldizer": true
+}

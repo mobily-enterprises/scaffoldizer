@@ -1,0 +1,54 @@
+{
+   "name":"something",
+   "version":"1.0.0",
+   "description":"An example scaffold for scaffoldizer",
+   "author":"Tony Mobily",
+   "moduleDependencies":[
+      "base"
+   ],
+   "manipulate":{
+      "json":{
+         "package.json":[
+            {
+               "op":"set",
+               "key":"scripts.start",
+               "value":"node server/www"
+            },
+            {
+               "op":"set",
+               "key":"dependencies.DEP1",
+               "value":"3.1.0"
+            },
+            {
+               "op":"unset",
+               "key":"scripts.start:build"
+            }
+         ]
+      },
+      "text":{
+         "app.js":[
+            {
+               "op":"insert",
+               "position":"after",
+               "newlineBefore":true,
+               "newlineAfter":true,
+               "anchorPoint":"/* ### STATIC FILES ### */",
+               "valueFromFile":"somethingText.js"
+            },
+            {
+               "op":"insert",
+               "position":"before",
+               "newlineBefore":true,
+               "newlineAfter":true,
+               "anchorPoint":"/* ### STATIC FILES ### */",
+               "valueFromFile":"somethingElseText.js"
+            },
+            {
+               "op":"replace",
+               "from":"a",
+               "to":"b"
+            }
+         ]
+      }
+   }
+}
