@@ -7,15 +7,19 @@ A "scaffold" can be a purposefully crafted NPM module, or a directory.
 
 Install Scaffoldizer in the global space:
 
+````
 $ npm i -g scaffoldizer
+````
 
 ## Basic use
 
+````
 $ mkdir example-app
 $ cd example-app
 $ npm init
 $ # ... answer basic questions
 $ add scaffoldizer-example .
+````
 
 Thiis command will enrich the current project (`.`) with the `scaffoldizer-example` scaffold, which will enrich it.
 
