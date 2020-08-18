@@ -12,7 +12,6 @@ TODO
 ✔ Allow passing NPM package rather than directory as SRC for scaffolding @done(2020-08-18 08:07)
 ✔ Write one complete module file with all features as starting point for use and documentation @done(2020-08-18 08:34)
 ✔ Finish off commands in utils @done(2020-08-18 12:17)
-☐ Write literate documentation for scaffoldizer, add and utils
 ☐ server
   ☐ write initial server (server directory, change 'start' in main package.json)
   ☐ Add readline-sync questions for DB setup (use post-install.sh in scripts)
