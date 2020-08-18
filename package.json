@@ -34,6 +34,7 @@
     "recursive-copy": "^2.0.10",
     "replace-in-file": "^6.1.0",
     "set-value": "^3.0.2",
+    "system-commands": "^1.1.7",
     "unset-value": "^1.0.0"
   },
   "devDependencies": {

@@ -8,8 +8,8 @@ TODO
 ✔ Change module.json format so that it's generic, make it work @done(2020-08-17 10:33)
 ✔ Allow input for variables, with script execution with prompts @done(2020-08-18 06:36)
 ✔ Enable EJS in values, resolve all value strings as EJS @done(2020-08-18 06:53)
-☐ Allow running of post-install, post-manipulation functions with access to all variables and library functions
-☐ Allow passing URL rather than directory as SRC for scaffolding
+✔ Allow running of post-install, post-manipulation functions with access to all variables and library functions @done(2020-08-18 06:59)
+✔ Allow passing NPM package rather than directory as SRC for scaffolding @done(2020-08-18 08:07)
 ☐ server
   ☐ write initial server (server directory, change 'start' in main package.json)
   ☐ Add readline-sync questions for DB setup (use post-install.sh in scripts)

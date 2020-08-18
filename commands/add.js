@@ -17,7 +17,7 @@ exports = module.exports = async (scaffold, module, dstDir) => {
   }
   const dstPackageJsonValues = fs.readJsonSync(dstPackageJson)
 
-  const scaffoldDir = utils.resolveScaffold(scaffold, dstDir)
+  const scaffoldDir = await utils.resolveScaffold(scaffold, dstDir)
   if (!utils.isDir(scaffoldDir)) {
     console.error('Could not find scaffold dir:', scaffoldDir)
     process.exit(1)
@@ -89,6 +89,8 @@ exports = module.exports = async (scaffold, module, dstDir) => {
       moduleCodeFunctions = require(path.resolve(moduleCode))
     }
 
+    if (moduleCodeFunctions.prePrompts) moduleCodeFunctions.prePrompts(config)
+
     if (moduleCodeFunctions.getPrompts) {
       const $p = moduleCodeFunctions.getPrompts(config)
       let $h
@@ -106,6 +108,8 @@ exports = module.exports = async (scaffold, module, dstDir) => {
 
     // Actually installing the module!
     console.log('Installing:', module)
+
+    if (moduleCodeFunctions.preAdd) moduleCodeFunctions.preAdd(config)
 
     const moduleDistrDir = path.join(moduleDir, 'distr')
     if (utils.isDir(moduleDistrDir)) {
@@ -158,6 +162,8 @@ exports = module.exports = async (scaffold, module, dstDir) => {
 
     // Mark it as installed in metadata (create lock file)
     fs.writeFileSync(moduleInstallFile, modulePackageJsonValues.version)
+
+    if (moduleCodeFunctions.postAdd) moduleCodeFunctions.postAdd(config)
 
     // Module installed!
     console.log('Module installed:', module)
