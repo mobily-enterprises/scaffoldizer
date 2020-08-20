@@ -51,7 +51,7 @@ exports = module.exports = async (scaffold, dstDir, module) => {
     const moduleDirs = fs.readdirSync(scaffoldModulesDir, { withFileTypes: true })
     for (const dirEnt of moduleDirs) {
       if (dirEnt.isDirectory()) {
-        console.log(dirEnt.name)
+        // console.log(dirEnt.name)
         const modulePackageJsonValues = fs.readJsonSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json'))
         if (modulePackageJsonValues.showInMenu) {
           choices.push({

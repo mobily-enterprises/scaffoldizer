@@ -18,10 +18,10 @@ $ mkdir example-app
 $ cd example-app
 $ npm init
 $ # ... answer basic questions
-$ add scaffoldizer-example .
+$ scaffoldizer add js-kit .
 ````
 
-Thiis command will enrich the current project (`.`) with the `scaffoldizer-example` scaffold, which will enrich it.
+This command will enrich the current project (`.`) with the `js-kit` scaffold, which will enrich it.
 
 ## Get your hands dirty
 
