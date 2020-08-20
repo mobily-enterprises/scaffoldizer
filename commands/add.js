@@ -71,7 +71,7 @@ exports = module.exports = async (scaffold, dstDir, module) => {
     })).value
   }
 
-  installModule(module)
+  await installModule(module)
 
   async function installModule (module) {
     const moduleDir = path.join(scaffoldDir, 'modules', module)
@@ -130,7 +130,7 @@ exports = module.exports = async (scaffold, dstDir, module) => {
     const deps = modulePackageJsonValues.moduleDependencies || []
     if (deps.length) console.log('This module has dependencies. Installing them.', deps)
     for (const module of deps) {
-      installModule(module)
+      await installModule(module)
     }
     if (deps.length) console.log('Dependencies installed.', deps)
 
