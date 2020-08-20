@@ -13,8 +13,8 @@ async function main () {
 
   // The main command: addss
   program
-    .command('add <scaffold> <dstDir> [module]')
-    .description('Add scaffold <scaffold> to the the project in <dstDir>. <scaffold> can be an NPM module or a local directory.')
+    .command('add <scaffold> <dstDir> [modules...]')
+    .description('Add scaffold <scaffold> to the the project in <dstDir>. <scaffold> can be an NPM module or a local directory.  You can optionally pass a list of modules to install. Otherwise, a UI will be initiated to pick which modules should be installed')
     .action(commands.add)
 
   await program.parseAsync(process.argv)

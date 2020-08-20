@@ -4,7 +4,7 @@ const utils = require('../lib/utils')
 const stringify = require('json-stable-stringify')
 const prompts = require('prompts')
 
-exports = module.exports = async (scaffold, dstDir, module) => {
+exports = module.exports = async (scaffold, dstDir, modules) => {
   // Destination directory must exist
   if (!utils.isDir(dstDir)) {
     console.error('Could not find destination dir:', dstDir)
@@ -42,36 +42,86 @@ exports = module.exports = async (scaffold, dstDir, module) => {
   const dstScaffoldizerRemotesDir = path.join(dstScaffoldizerDir, 'remoteScaffolds')
   fs.ensureDirSync(dstScaffoldizerRemotesDir)
 
+  const onPromptCancel = (prompt) => {
+    console.error('Aborting...')
+    process.exit(1)
+  }
+
   const userInput = {}
 
   // No module passed: let the user decide
-  if (!module) {
-    const choices = []
+  let choices = []
+  let shortListChoices = []
+  const installedModules = {}
+  if (!modules.length) {
     const scaffoldModulesDir = path.join(scaffoldDir, 'modules')
     const moduleDirs = fs.readdirSync(scaffoldModulesDir, { withFileTypes: true })
     for (const dirEnt of moduleDirs) {
       if (dirEnt.isDirectory()) {
         // console.log(dirEnt.name)
         const modulePackageJsonValues = fs.readJsonSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json'))
-        if (modulePackageJsonValues.showInMenu) {
-          choices.push({
+        if (modulePackageJsonValues.shortListed) {
+          shortListChoices.push({
             title: modulePackageJsonValues.name,
             description: modulePackageJsonValues.description,
-            value: modulePackageJsonValues.name
+            value: modulePackageJsonValues.name,
+            position: modulePackageJsonValues.shortListPosition
           })
+        }
+        let dependencies = ''
+        if (Array.isArray(modulePackageJsonValues.moduleDependencies) && modulePackageJsonValues.moduleDependencies.length) {
+          dependencies = `, depends on: ${modulePackageJsonValues.moduleDependencies.join(', ')}`
+        } else {
+          dependencies = ', no dependencies'
+        }
+        choices.push({
+          title: modulePackageJsonValues.name,
+          description: `${modulePackageJsonValues.description}${dependencies}}`,
+          value: modulePackageJsonValues.name,
+          position: modulePackageJsonValues.position
+        })
+
+        if (fs.existsSync(path.join(dstScaffoldizerInstalledDir, dirEnt.name))) {
+          installedModules[dirEnt.name] = true
         }
       }
     }
 
-    module = (await prompts({
+    shortListChoices = shortListChoices
+      .sort((a, b) => Number(a.position) - Number(b.position))
+      .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
+      .filter(choice => Number(choice.position) !== -1)
+
+    choices = choices
+      .sort((a, b) => Number(a.position) - Number(b.position))
+      .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
+      .filter(choice => Number(choice.position) !== -1)
+
+    shortListChoices.push({
+      title: 'Pick individual modules',
+      value: '__INDIVIDUAL__'
+
+    })
+
+    modules = (await prompts({
       type: 'select',
       name: 'value',
       message: 'pick a module to install',
-      choices
-    })).value
+      choices: shortListChoices
+    }, { onCancel: onPromptCancel })).value
   }
 
-  await installModule(module)
+  if (modules === '__INDIVIDUAL__') {
+    modules = (await prompts({
+      type: 'multiselect',
+      name: 'value',
+      message: 'pick a module to install',
+      choices
+    }, { onCancel: onPromptCancel })).value
+  }
+
+  if (!Array.isArray(modules)) modules = [modules]
+  for (const module of modules) await installModule(module)
 
   async function installModule (module) {
     const moduleDir = path.join(scaffoldDir, 'modules', module)
@@ -124,7 +174,7 @@ exports = module.exports = async (scaffold, dstDir, module) => {
       let $h
       if (moduleCodeFunctions.getPromptsHeading) $h = moduleCodeFunctions.getPromptsHeading()
       if ($h) console.log($h)
-      userInput[module] = await prompts($p)
+      userInput[module] = await prompts($p, { onCancel: onPromptCancel })
     }
 
     const deps = modulePackageJsonValues.moduleDependencies || []
