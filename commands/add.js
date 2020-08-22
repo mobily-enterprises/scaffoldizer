@@ -157,7 +157,8 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       dstPackageJsonValues,
       scaffoldPackageJsonValues,
       modulePackageJsonValues,
-      userInput
+      userInput,
+      utils
     }
 
     // Include code
