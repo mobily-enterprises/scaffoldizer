@@ -3,6 +3,7 @@ const path = require('path')
 const utils = require('../lib/utils')
 const stringify = require('json-stable-stringify')
 const prompts = require('prompts')
+const ejs = require('ejs')
 
 exports = module.exports = async (scaffold, dstDir, modules) => {
   // Destination directory must exist
@@ -48,6 +49,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
   }
 
   const userInput = {}
+  const vars = {}
 
   // No module passed: let the user decide
   let choices = []
@@ -151,6 +153,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     const config = {
       moduleDir,
       moduleInstallFile,
+      dstDir,
       dstScaffoldizerDir,
       dstScaffoldizerInstalledDir,
       dstScaffoldizerRemotesDir,
@@ -158,7 +161,8 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       scaffoldPackageJsonValues,
       modulePackageJsonValues,
       userInput,
-      utils
+      utils,
+      vars
     }
 
     // Include code
@@ -167,6 +171,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     if (fs.existsSync(moduleCode)) {
       moduleCodeFunctions = require(path.resolve(moduleCode))
     }
+    config.moduleCodeFunctions = moduleCodeFunctions
 
     if (moduleCodeFunctions.prePrompts) moduleCodeFunctions.prePrompts(config)
 
@@ -193,13 +198,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     const moduleDistrDir = path.join(moduleDir, 'distr')
     if (utils.isDir(moduleDistrDir)) {
       console.log('"distr" folder found, copying files over')
-      utils.copyRecursiveSync(moduleDistrDir, dstDir, true)
-    }
-
-    const moduleDistrOptDir = path.join(moduleDir, 'distr-opt')
-    if (utils.isDir(moduleDistrOptDir)) {
-      console.log('"distr-opt" folder (optional files) found, copying files over')
-      utils.copyRecursiveSync(moduleDistrOptDir, dstDir, false)
+      utils.copyRecursiveSync(moduleDistrDir, dstDir, config)
     }
 
     // Carry ong requested inserts in destination files
@@ -212,30 +211,33 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
 
     // TEXT MANIPULATIONS
     for (const fileRelativePath in textManipulations) {
+      const resolvedFileRelativePath = ejs.render(fileRelativePath, config)
       listOfManipulations = textManipulations[fileRelativePath]
       if (typeof list === 'object') listOfManipulations = [listOfManipulations[0]]
       try {
-        contents = fs.readFileSync(path.join(dstDir, fileRelativePath)).toString()
+        contents = fs.readFileSync(path.join(dstDir, resolvedFileRelativePath)).toString()
       } catch (e) {
         console.error('Destination file to manipulate does not exist in target directory:', fileRelativePath)
         continue
       }
       contents = await utils.manipulateText(contents, listOfManipulations, config)
-      fs.writeFileSync(path.join(dstDir, fileRelativePath), contents)
+      fs.writeFileSync(path.join(dstDir, resolvedFileRelativePath), contents)
     }
 
     // JSON MANIPULATIONS
     for (const fileRelativePath in jsonManipulations) {
+      const resolvedFileRelativePath = ejs.render(fileRelativePath, config)
       listOfManipulations = jsonManipulations[fileRelativePath]
       if (typeof list === 'object') listOfManipulations = [listOfManipulations[0]]
       try {
-        contents = fs.readJsonSync(path.join(dstDir, fileRelativePath))
+        contents = fs.readJsonSync(path.join(dstDir, resolvedFileRelativePath))
       } catch (e) {
         console.error('Destination file to manipulate does not exist in target directory:', fileRelativePath)
         continue
       }
+
       contents = await utils.manipulateJson(contents, listOfManipulations, config)
-      fs.writeFileSync(path.join(dstDir, fileRelativePath), stringify(contents, { space: 2 }))
+      fs.writeFileSync(path.join(dstDir, resolvedFileRelativePath), stringify(contents, { space: 2 }))
       // fs.writeJsonSync(path.join(dstDir, fileRelativePath), contents, { spaces: 2 })
     }
 
