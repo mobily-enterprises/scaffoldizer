@@ -67,7 +67,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
             title: modulePackageJsonValues.name,
             description: modulePackageJsonValues.description,
             value: modulePackageJsonValues.name,
-            position: modulePackageJsonValues.shortListPosition
+            shortListPosition: modulePackageJsonValues.shortListPosition
           })
         }
         let dependencies = ''
@@ -76,12 +76,14 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
         } else {
           dependencies = ', no dependencies'
         }
-        choices.push({
-          title: modulePackageJsonValues.name,
-          description: `${modulePackageJsonValues.description}${dependencies}}`,
-          value: modulePackageJsonValues.name,
-          position: modulePackageJsonValues.position
-        })
+        if (!modulePackageJsonValues.shortListed) {
+          choices.push({
+            title: modulePackageJsonValues.name,
+            description: `${modulePackageJsonValues.description}${dependencies}}`,
+            value: modulePackageJsonValues.name,
+            position: modulePackageJsonValues.position
+          })
+        }
 
         if (fs.existsSync(path.join(dstScaffoldizerInstalledDir, dirEnt.name))) {
           installedModules[dirEnt.name] = true
@@ -90,19 +92,23 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     }
 
     shortListChoices = shortListChoices
-      .sort((a, b) => Number(a.position) - Number(b.position))
+      .sort((a, b) => Number(a.shortListPosition) - Number(b.shortListPosition))
       .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
-      .filter(choice => Number(choice.position) !== -1)
+      // .filter(choice => Number(choice.shortListPosition) !== -1)
 
     choices = choices
       .sort((a, b) => Number(a.position) - Number(b.position))
       .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
-      .filter(choice => Number(choice.position) !== -1)
+      // .filter(choice => Number(choice.position) !== -1)
 
     shortListChoices.push({
       title: 'Pick individual modules',
       value: '__INDIVIDUAL__'
+    })
 
+    shortListChoices.push({
+      title: 'Install ',
+      value: '__COMPONENTS__'
     })
 
     modules = (await prompts({
@@ -201,7 +207,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       utils.copyRecursiveSync(moduleDistrDir, dstDir, config)
     }
 
-    // Carry ong requested inserts in destination files
+    // Carry on requested inserts in destination files
     const manipulations = modulePackageJsonValues.manipulate || {}
     const jsonManipulations = manipulations.json || {}
     const textManipulations = manipulations.text || {}
@@ -236,8 +242,12 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
         continue
       }
 
-      contents = await utils.manipulateJson(contents, listOfManipulations, config)
-      fs.writeFileSync(path.join(dstDir, resolvedFileRelativePath), stringify(contents, { space: 2 }))
+      // If it can be installed more than once, don't mark it as installed at all
+      if (!modulePackageJson.multiInstall) {
+        contents = await utils.manipulateJson(contents, listOfManipulations, config)
+        fs.writeFileSync(path.join(dstDir, resolvedFileRelativePath), stringify(contents, { space: 2 }))
+      }
+
       // fs.writeJsonSync(path.join(dstDir, fileRelativePath), contents, { spaces: 2 })
     }
 
