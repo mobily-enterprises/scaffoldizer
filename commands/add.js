@@ -54,6 +54,8 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
   // No module passed: let the user decide
   let choices = []
   let shortListChoices = []
+  let actualShortListChoices
+
   const installedModules = {}
   if (!modules.length) {
     const scaffoldModulesDir = path.join(scaffoldDir, 'modules')
@@ -62,26 +64,31 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       if (dirEnt.isDirectory()) {
         // console.log(dirEnt.name)
         const modulePackageJsonValues = fs.readJsonSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json'))
-        if (modulePackageJsonValues.shortListed) {
-          shortListChoices.push({
-            title: modulePackageJsonValues.name,
-            description: modulePackageJsonValues.description,
-            value: modulePackageJsonValues.name,
-            position: modulePackageJsonValues.shortListPosition
-          })
-        }
         let dependencies = ''
-        if (Array.isArray(modulePackageJsonValues.moduleDependencies) && modulePackageJsonValues.moduleDependencies.length) {
-          dependencies = `, depends on: ${modulePackageJsonValues.moduleDependencies.join(', ')}`
-        } else {
-          dependencies = ', no dependencies'
+        let isComponentString = ''
+        if (!modulePackageJsonValues.shortListed) {
+          if (Array.isArray(modulePackageJsonValues.moduleDependencies) && modulePackageJsonValues.moduleDependencies.length) {
+            dependencies = `, depends on: ${modulePackageJsonValues.moduleDependencies.join(', ')}`
+          } else {
+            dependencies = ', no dependencies'
+          }
         }
-        choices.push({
-          title: modulePackageJsonValues.name,
-          description: `${modulePackageJsonValues.description}${dependencies}}`,
+        if (modulePackageJsonValues.component) {
+          isComponentString = '[component] '
+        }
+
+        const componentObject = {
+          title: `${isComponentString}${modulePackageJsonValues.name}`,
+          description: `${modulePackageJsonValues.description}${dependencies}`,
           value: modulePackageJsonValues.name,
           position: modulePackageJsonValues.position
-        })
+        }
+
+        if (modulePackageJsonValues.shortListed) {
+          shortListChoices.push(componentObject)
+        } else {
+          choices.push(componentObject)
+        }
 
         if (fs.existsSync(path.join(dstScaffoldizerInstalledDir, dirEnt.name))) {
           installedModules[dirEnt.name] = true
@@ -90,40 +97,45 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     }
 
     shortListChoices = shortListChoices
-      .sort((a, b) => Number(a.position) - Number(b.position))
-      .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
-      .filter(choice => Number(choice.position) !== -1)
+      .filter(choice => !installedModules[choice.value] || choice.component)
+      // .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
+      .sort((a, b) => Number(a.shortListPosition) - Number(b.shortListPosition))
 
     choices = choices
-      .sort((a, b) => Number(a.position) - Number(b.position))
+      // .filter(choice => Number(choice.position) !== -1)
       .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
-      .filter(choice => Number(choice.position) !== -1)
+      .sort((a, b) => Number(a.position) - Number(b.position))
 
-    shortListChoices.push({
-      title: 'Pick individual modules',
-      value: '__INDIVIDUAL__'
+    actualShortListChoices = shortListChoices.filter(choice => !choice.disabled)
 
-    })
+    if (actualShortListChoices.length) {
+      modules = (await prompts({
+        type: 'select',
+        name: 'value',
+        message: 'pick a module to install',
+        choices: [...shortListChoices, {
+          title: 'Pick individual modules',
+          value: '__INDIVIDUAL__'
+        }]
+      }, { onCancel: onPromptCancel })).value
+    }
 
-    modules = (await prompts({
-      type: 'select',
-      name: 'value',
-      message: 'pick a module to install',
-      choices: shortListChoices
-    }, { onCancel: onPromptCancel })).value
-  }
-
-  if (modules === '__INDIVIDUAL__') {
-    modules = (await prompts({
-      type: 'multiselect',
-      name: 'value',
-      message: 'pick a module to install',
-      choices
-    }, { onCancel: onPromptCancel })).value
+    if (modules === '__INDIVIDUAL__' || !actualShortListChoices.length) {
+      modules = (await prompts({
+        type: 'multiselect',
+        name: 'value',
+        message: 'pick a module to install',
+        choices
+      }, { onCancel: onPromptCancel })).value
+    }
   }
 
   if (!Array.isArray(modules)) modules = [modules]
-  for (const module of modules) await installModule(module)
+  if (!modules.length) {
+    console.log('Nothing to install, quitting...')
+  } else {
+    for (const module of modules) await installModule(module)
+  }
 
   async function installModule (module) {
     const moduleDir = path.join(scaffoldDir, 'modules', module)
@@ -241,8 +253,10 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       // fs.writeJsonSync(path.join(dstDir, fileRelativePath), contents, { spaces: 2 })
     }
 
-    // Mark it as installed in metadata (create lock file)
-    fs.writeFileSync(moduleInstallFile, modulePackageJsonValues.version)
+    if (!modulePackageJsonValues.component) {
+      // Mark it as installed in metadata (create lock file)
+      fs.writeFileSync(moduleInstallFile, modulePackageJsonValues.version)
+    }
 
     if (moduleCodeFunctions.postAdd) moduleCodeFunctions.postAdd(config)
 
