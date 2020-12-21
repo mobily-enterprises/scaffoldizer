@@ -5,6 +5,7 @@ const stringify = require('json-stable-stringify')
 const prompts = require('prompts')
 const ejs = require('ejs')
 
+
 exports = module.exports = async (scaffold, dstDir, modules) => {
   // Destination directory must exist
   if (!utils.isDir(dstDir)) {
