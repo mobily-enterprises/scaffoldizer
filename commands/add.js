@@ -4,9 +4,10 @@ const utils = require('../lib/utils')
 const stringify = require('json-stable-stringify')
 const prompts = require('prompts')
 const ejs = require('ejs')
-
+const { program } = require('commander')
 
 exports = module.exports = async (scaffold, dstDir, modules) => {
+  const verbose = program.verbose
   // Destination directory must exist
   if (!utils.isDir(dstDir)) {
     console.error('Could not find destination dir:', dstDir)
@@ -149,10 +150,12 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     }
 
     // Check if module is already installed
-    if (fs.existsSync(moduleInstallFile)) {
+    if (verbose && fs.existsSync(moduleInstallFile)) {
       console.log(`${module} already installed, skipping...`)
       return
     }
+
+    console.log(`Installing ${module}`)
 
     // Install dependendencies first
 
@@ -162,6 +165,16 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       process.exit(1)
     }
     const modulePackageJsonValues = fs.readJsonSync(modulePackageJson)
+
+    const deps = modulePackageJsonValues.moduleDependencies || []
+    if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
+    for (const module of deps) {
+      await installModule(module)
+    }
+    if (verbose && deps.length) console.log('Dependencies installed.', deps)
+
+    // Actually installing the module!
+    console.log('Installing:', module)
 
     const config = {
       moduleDir,
@@ -192,29 +205,19 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       const $p = moduleCodeFunctions.getPrompts(config)
       let $h
       if (moduleCodeFunctions.getPromptsHeading) $h = moduleCodeFunctions.getPromptsHeading()
-      if ($h) console.log($h)
+      if ($h) console.log(`\n${$h}\n`)
       userInput[module] = await prompts($p, { onCancel: onPromptCancel })
     }
-
-    const deps = modulePackageJsonValues.moduleDependencies || []
-    if (deps.length) console.log('This module has dependencies. Installing them.', deps)
-    for (const module of deps) {
-      await installModule(module)
-    }
-    if (deps.length) console.log('Dependencies installed.', deps)
-
-    // Actually installing the module!
-    console.log('Installing:', module)
 
     if (moduleCodeFunctions.preAdd) moduleCodeFunctions.preAdd(config)
 
     const moduleDistrDir = path.join(moduleDir, 'distr')
     if (utils.isDir(moduleDistrDir)) {
-      console.log('"distr" folder found, copying files over')
+      if (verbose) console.log('"distr" folder found, copying files over')
       utils.copyRecursiveSync(moduleDistrDir, dstDir, config)
     }
 
-    // Carry ong requested inserts in destination files
+    // Carry on requested inserts in destination files
     const manipulations = modulePackageJsonValues.manipulate || {}
     const jsonManipulations = manipulations.json || {}
     const textManipulations = manipulations.text || {}
@@ -262,6 +265,6 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     if (moduleCodeFunctions.postAdd) moduleCodeFunctions.postAdd(config)
 
     // Module installed!
-    console.log('Module installed:', module)
+    if (verbose) console.log('Module installed:', module)
   }
 }

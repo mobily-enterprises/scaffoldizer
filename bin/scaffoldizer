@@ -4,6 +4,8 @@ const scaffoldizerPackageJson = require('../package.json')
 const commands = require('../commands')
 // const globals = require('./globals')
 
+const increaseVerbosity = (dummyValue, previous) => previous++
+
 main()
 
 async function main () {
@@ -11,9 +13,12 @@ async function main () {
   // Set the version depending on package.json
   program.version(scaffoldizerPackageJson.version)
 
-  // The main command: addss
-  program
-    .command('add <scaffold> <dstDir> [modules...]')
+  // The main command: add
+  program.option('-v, --verbose', 'verbosity that can be increased', increaseVerbosity, 0)
+
+  await program.parseAsync(process.argv)
+
+  program.command('add <scaffold> <dstDir> [modules...]')
     .description('Add scaffold <scaffold> to the the project in <dstDir>. <scaffold> can be an NPM module or a local directory.  You can optionally pass a list of modules to install. Otherwise, a UI will be initiated to pick which modules should be installed')
     .action(commands.add)
 
