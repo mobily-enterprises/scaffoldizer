@@ -26,6 +26,7 @@
   "dependencies": {
     "commander": "^6.0.0",
     "ejs": "^3.1.5",
+    "escape-string-regexp": "^4.0.0",
     "fs-extra": "^9.0.1",
     "get-value": "^3.0.1",
     "json-stable-stringify": "^1.0.1",
