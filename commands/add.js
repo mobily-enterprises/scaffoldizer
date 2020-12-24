@@ -32,6 +32,12 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
   }
   const scaffoldPackageJsonValues = fs.readJsonSync(scaffoldPackageJson)
 
+  const scaffoldUtilsSource = path.join(scaffoldDir, 'utils.js')
+  let scaffoldUtilsFunctions = {}
+  if (fs.existsSync(scaffoldUtilsSource)) {
+    scaffoldUtilsFunctions = require(path.resolve(scaffoldUtilsSource))
+  }
+
   if (!scaffoldPackageJsonValues.forScaffoldizer) {
     console.error('Scaffold source must be a scaffold package')
     process.exit(1)
@@ -185,6 +191,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       dstScaffoldizerRemotesDir,
       dstPackageJsonValues,
       scaffoldPackageJsonValues,
+      scaffoldUtilsFunctions,
       modulePackageJsonValues,
       userInput,
       utils,
@@ -211,7 +218,9 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
 
     if (moduleCodeFunctions.preAdd) moduleCodeFunctions.preAdd(config)
 
+
     const moduleDistrDir = path.join(moduleDir, 'distr')
+    if (moduleDistrDir === 'Development/js-kit/modules/client-app-frame/distr') debugger
     if (utils.isDir(moduleDistrDir)) {
       if (verbose) console.log('"distr" folder found, copying files over')
       utils.copyRecursiveSync(moduleDistrDir, dstDir, config)
@@ -233,7 +242,8 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       try {
         contents = fs.readFileSync(path.join(dstDir, resolvedFileRelativePath)).toString()
       } catch (e) {
-        console.error('Destination file to manipulate does not exist in target directory:', fileRelativePath)
+        console.error('Destination file to manipulate does not exist in target directory:', fileRelativePath, 'resolved as', resolvedFileRelativePath)
+        debugger
         continue
       }
       contents = await utils.manipulateText(contents, listOfManipulations, config)
