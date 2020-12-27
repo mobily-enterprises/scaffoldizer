@@ -171,7 +171,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       console.log(`FATAL: Module is missing the package.json file: ${module}`)
       process.exit(1)
     }
-    const modulePackageJsonValues = fs.readJsonSync(modulePackageJson)
+    const modulePackageJsonValues = JSON5.parse(fs.readFileSync(modulePackageJson, 'utf-8'))
 
     const deps = modulePackageJsonValues.moduleDependencies || []
     if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
@@ -218,7 +218,6 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     }
 
     if (moduleCodeFunctions.preAdd) moduleCodeFunctions.preAdd(config)
-
 
     const moduleDistrDir = path.join(moduleDir, 'distr')
     if (utils.isDir(moduleDistrDir)) {
