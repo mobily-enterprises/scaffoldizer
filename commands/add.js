@@ -5,6 +5,7 @@ const stringify = require('json-stable-stringify')
 const prompts = require('prompts')
 const ejs = require('ejs')
 const { program } = require('commander')
+const JSON5 = require('json5')
 
 exports = module.exports = async (scaffold, dstDir, modules) => {
   const verbose = program.verbose
@@ -71,7 +72,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     for (const dirEnt of moduleDirs) {
       if (dirEnt.isDirectory()) {
         // console.log(dirEnt.name)
-        const modulePackageJsonValues = fs.readJsonSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json'))
+        const modulePackageJsonValues = JSON5.parse(fs.readFileSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json5'), 'utf8'))
         let dependencies = ''
         let isComponentString = ''
         if (!modulePackageJsonValues.shortListed) {
@@ -165,7 +166,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
 
     // Install dependendencies first
 
-    const modulePackageJson = path.join(moduleDir, 'module.json')
+    const modulePackageJson = path.join(moduleDir, 'module.json5')
     if (!fs.existsSync(modulePackageJson)) {
       console.log(`FATAL: Module is missing the package.json file: ${module}`)
       process.exit(1)
