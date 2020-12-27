@@ -220,7 +220,6 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
 
 
     const moduleDistrDir = path.join(moduleDir, 'distr')
-    if (moduleDistrDir === 'Development/js-kit/modules/client-app-frame/distr') debugger
     if (utils.isDir(moduleDistrDir)) {
       if (verbose) console.log('"distr" folder found, copying files over')
       utils.copyRecursiveSync(moduleDistrDir, dstDir, config)
@@ -243,7 +242,6 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
         contents = fs.readFileSync(path.join(dstDir, resolvedFileRelativePath)).toString()
       } catch (e) {
         console.error('Destination file to manipulate does not exist in target directory:', fileRelativePath, 'resolved as', resolvedFileRelativePath)
-        debugger
         continue
       }
       contents = await utils.manipulateText(contents, listOfManipulations, config)
