@@ -72,28 +72,28 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     for (const dirEnt of moduleDirs) {
       if (dirEnt.isDirectory()) {
         // console.log(dirEnt.name)
-        const modulePackageJsonValues = JSON5.parse(fs.readFileSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json5'), 'utf8'))
+        const moduleJson5Values = JSON5.parse(fs.readFileSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json5'), 'utf8'))
         let dependencies = ''
         let isComponentString = ''
-        if (!modulePackageJsonValues.shortListed) {
-          if (Array.isArray(modulePackageJsonValues.moduleDependencies) && modulePackageJsonValues.moduleDependencies.length) {
-            dependencies = `, depends on: ${modulePackageJsonValues.moduleDependencies.join(', ')}`
+        if (!moduleJson5Values.shortListed) {
+          if (Array.isArray(moduleJson5Values.moduleDependencies) && moduleJson5Values.moduleDependencies.length) {
+            dependencies = `, depends on: ${moduleJson5Values.moduleDependencies.join(', ')}`
           } else {
             dependencies = ', no dependencies'
           }
         }
-        if (modulePackageJsonValues.component) {
+        if (moduleJson5Values.component) {
           isComponentString = '[component] '
         }
 
         const componentObject = {
-          title: `${isComponentString}${modulePackageJsonValues.name}`,
-          description: `${modulePackageJsonValues.description}${dependencies}`,
-          value: modulePackageJsonValues.name,
-          position: modulePackageJsonValues.position
+          title: `${isComponentString}${moduleJson5Values.name}`,
+          description: `${moduleJson5Values.description}${dependencies}`,
+          value: moduleJson5Values.name,
+          position: moduleJson5Values.position
         }
 
-        if (modulePackageJsonValues.shortListed) {
+        if (moduleJson5Values.shortListed) {
           shortListChoices.push(componentObject)
         } else {
           choices.push(componentObject)
@@ -156,24 +156,14 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       process.exit(1)
     }
 
-    // Check if module is already installed
-    if (verbose && fs.existsSync(moduleInstallFile)) {
-      console.log(`${module} already installed, skipping...`)
-      return
-    }
-
-    console.log(`Installing ${module}`)
-
-    // Install dependendencies first
-
-    const modulePackageJson = path.join(moduleDir, 'module.json5')
-    if (!fs.existsSync(modulePackageJson)) {
-      console.log(`FATAL: Module is missing the package.json file: ${module}`)
+    const moduleJson5 = path.join(moduleDir, 'module.json5')
+    if (!fs.existsSync(moduleJson5)) {
+      console.log(`FATAL: Module is missing the module.json5 file: ${module}`)
       process.exit(1)
     }
-    const modulePackageJsonValues = JSON5.parse(fs.readFileSync(modulePackageJson, 'utf-8'))
+    const moduleJson5Values = JSON5.parse(fs.readFileSync(moduleJson5, 'utf-8'))
 
-    const deps = modulePackageJsonValues.moduleDependencies || []
+    const deps = moduleJson5Values.moduleDependencies || []
     if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
     for (const module of deps) {
       await installModule(module)
@@ -193,7 +183,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       dstPackageJsonValues,
       scaffoldPackageJsonValues,
       scaffoldUtilsFunctions,
-      modulePackageJsonValues,
+      moduleJson5Values,
       userInput,
       utils,
       vars
@@ -207,6 +197,23 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     }
     config.moduleCodeFunctions = moduleCodeFunctions
 
+    // Check if module is already installed
+    if (verbose && fs.existsSync(moduleInstallFile)) {
+      console.log(`${module} already installed, skipping...`)
+
+      // Use the install file as source of the user input provided at
+      // installation time
+      userInput[module] = fs.readJsonSync(moduleInstallFile)
+
+      // Run the boot function
+      if (moduleCodeFunctions.boot) moduleCodeFunctions.boot(config)
+      return
+    }
+
+    console.log(`Installing ${module}`)
+
+    // Install dependendencies first
+
     if (moduleCodeFunctions.prePrompts) moduleCodeFunctions.prePrompts(config)
 
     if (moduleCodeFunctions.getPrompts) {
@@ -217,6 +224,12 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       userInput[module] = await prompts($p, { onCancel: onPromptCancel })
     }
 
+    // Run the boot function. This is run even if the module is already
+    // installed. However, if the module is NOT already installed, it's
+    // also run
+    if (moduleCodeFunctions.boot) moduleCodeFunctions.boot(config)
+
+    // Run the preAdd hook if defined
     if (moduleCodeFunctions.preAdd) moduleCodeFunctions.preAdd(config)
 
     const moduleDistrDir = path.join(moduleDir, 'distr')
@@ -226,7 +239,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     }
 
     // Carry on requested inserts in destination files
-    const manipulations = modulePackageJsonValues.manipulate || {}
+    const manipulations = moduleJson5Values.manipulate || {}
     const jsonManipulations = manipulations.json || {}
     const textManipulations = manipulations.text || {}
 
@@ -265,9 +278,9 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       // fs.writeJsonSync(path.join(dstDir, fileRelativePath), contents, { spaces: 2 })
     }
 
-    if (!modulePackageJsonValues.component) {
+    if (!moduleJson5Values.component) {
       // Mark it as installed in metadata (create lock file)
-      fs.writeFileSync(moduleInstallFile, modulePackageJsonValues.version)
+      fs.writeJsonSync(moduleInstallFile, userInput[module])
     }
 
     if (moduleCodeFunctions.postAdd) moduleCodeFunctions.postAdd(config)
