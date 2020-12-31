@@ -170,9 +170,6 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     }
     if (verbose && deps.length) console.log('Dependencies installed.', deps)
 
-    // Actually installing the module!
-    console.log('Installing:', module)
-
     const config = {
       moduleDir,
       moduleInstallFile,
@@ -198,8 +195,8 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     config.moduleCodeFunctions = moduleCodeFunctions
 
     // Check if module is already installed
-    if (verbose && fs.existsSync(moduleInstallFile)) {
-      console.log(`${module} already installed, skipping...`)
+    if (fs.existsSync(moduleInstallFile)) {
+      if (verbose) console.log(`${module} already installed, skipping...`)
 
       // Use the install file as source of the user input provided at
       // installation time
@@ -217,11 +214,16 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     if (moduleCodeFunctions.prePrompts) moduleCodeFunctions.prePrompts(config)
 
     if (moduleCodeFunctions.getPrompts) {
+      userInput[module] = {}
+
+      // Note: getPrompts might set values in  userInput[module] progrfammatically
       const $p = moduleCodeFunctions.getPrompts(config)
       let $h
       if (moduleCodeFunctions.getPromptsHeading) $h = moduleCodeFunctions.getPromptsHeading()
       if ($h) console.log(`\n${$h}\n`)
-      userInput[module] = await prompts($p, { onCancel: onPromptCancel })
+
+      const answers = await prompts($p, { onCancel: onPromptCancel })
+      userInput[module] = { ...userInput[module], ...answers }
     }
 
     // Run the boot function. This is run even if the module is already
