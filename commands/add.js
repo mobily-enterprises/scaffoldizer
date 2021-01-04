@@ -1,9 +1,7 @@
 const fs = require('fs-extra')
 const path = require('path')
 const utils = require('../lib/utils')
-const stringify = require('json-stable-stringify')
 const prompts = require('prompts')
-const ejs = require('ejs')
 const { program } = require('commander')
 const JSON5 = require('json5')
 
@@ -211,11 +209,10 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
 
     // Install dependendencies first
 
+    userInput[module] = {}
     if (moduleCodeFunctions.prePrompts) moduleCodeFunctions.prePrompts(config)
 
     if (moduleCodeFunctions.getPrompts) {
-      userInput[module] = {}
-
       // Note: getPrompts might set values in  userInput[module] progrfammatically
       const $p = moduleCodeFunctions.getPrompts(config)
       let $h
@@ -240,45 +237,9 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       utils.copyRecursiveSync(moduleDistrDir, dstDir, config)
     }
 
-    // Carry on requested inserts in destination files
+    // Execute on requested inserts in destination files
     const manipulations = moduleJson5Values.manipulate || {}
-    const jsonManipulations = manipulations.json || {}
-    const textManipulations = manipulations.text || {}
-
-    let listOfManipulations
-    let contents
-
-    // TEXT MANIPULATIONS
-    for (const fileRelativePath in textManipulations) {
-      const resolvedFileRelativePath = ejs.render(fileRelativePath, config)
-      listOfManipulations = textManipulations[fileRelativePath]
-      if (typeof list === 'object') listOfManipulations = [listOfManipulations[0]]
-      try {
-        contents = fs.readFileSync(path.join(dstDir, resolvedFileRelativePath)).toString()
-      } catch (e) {
-        console.error('Destination file to manipulate does not exist in target directory:', fileRelativePath, 'resolved as', resolvedFileRelativePath)
-        continue
-      }
-      contents = await utils.manipulateText(contents, listOfManipulations, config)
-      fs.writeFileSync(path.join(dstDir, resolvedFileRelativePath), contents)
-    }
-
-    // JSON MANIPULATIONS
-    for (const fileRelativePath in jsonManipulations) {
-      const resolvedFileRelativePath = ejs.render(fileRelativePath, config)
-      listOfManipulations = jsonManipulations[fileRelativePath]
-      if (typeof list === 'object') listOfManipulations = [listOfManipulations[0]]
-      try {
-        contents = fs.readJsonSync(path.join(dstDir, resolvedFileRelativePath))
-      } catch (e) {
-        console.error('Destination file to manipulate does not exist in target directory:', fileRelativePath)
-        continue
-      }
-
-      contents = await utils.manipulateJson(contents, listOfManipulations, config)
-      fs.writeFileSync(path.join(dstDir, resolvedFileRelativePath), stringify(contents, { space: 2 }))
-      // fs.writeJsonSync(path.join(dstDir, fileRelativePath), contents, { spaces: 2 })
-    }
+    await config.utils.executeManipulations(manipulations, config)
 
     if (!moduleJson5Values.component) {
       // Mark it as installed in metadata (create lock file)
