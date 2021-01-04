@@ -226,10 +226,10 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     // Run the boot function. This is run even if the module is already
     // installed. However, if the module is NOT already installed, it's
     // also run
-    if (moduleCodeFunctions.boot) moduleCodeFunctions.boot(config)
+    if (moduleCodeFunctions.boot) await moduleCodeFunctions.boot(config)
 
     // Run the preAdd hook if defined
-    if (moduleCodeFunctions.preAdd) moduleCodeFunctions.preAdd(config)
+    if (moduleCodeFunctions.preAdd) await moduleCodeFunctions.preAdd(config)
 
     const moduleDistrDir = path.join(moduleDir, 'distr')
     if (utils.isDir(moduleDistrDir)) {
@@ -246,7 +246,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       fs.writeJsonSync(moduleInstallFile, userInput[module])
     }
 
-    if (moduleCodeFunctions.postAdd) moduleCodeFunctions.postAdd(config)
+    if (moduleCodeFunctions.postAdd) await moduleCodeFunctions.postAdd(config)
 
     // Module installed!
     if (verbose) console.log('Module installed:', module)
