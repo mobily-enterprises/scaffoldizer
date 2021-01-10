@@ -59,9 +59,8 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
   const vars = {}
 
   // No module passed: let the user decide
-  let choices = []
-  let shortListChoices = []
-  let actualShortListChoices
+  let modulesToPick = []
+  let componentsToPick = []
 
   const installedModules = {}
   if (!modules.length) {
@@ -72,7 +71,6 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
         // console.log(dirEnt.name)
         const moduleJson5Values = JSON5.parse(fs.readFileSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json5'), 'utf8'))
         let dependencies = ''
-        let isComponentString = ''
         if (!moduleJson5Values.shortListed) {
           if (Array.isArray(moduleJson5Values.moduleDependencies) && moduleJson5Values.moduleDependencies.length) {
             dependencies = `, depends on: ${moduleJson5Values.moduleDependencies.join(', ')}`
@@ -80,21 +78,18 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
             dependencies = ', no dependencies'
           }
         }
-        if (moduleJson5Values.component) {
-          isComponentString = '[component] '
-        }
 
         const componentObject = {
-          title: `${isComponentString}${moduleJson5Values.name}`,
+          title: moduleJson5Values.name,
           description: `${moduleJson5Values.description}${dependencies}`,
           value: moduleJson5Values.name,
           position: moduleJson5Values.position
         }
 
-        if (moduleJson5Values.shortListed) {
-          shortListChoices.push(componentObject)
+        if (moduleJson5Values.component) {
+          componentsToPick.push(componentObject)
         } else {
-          choices.push(componentObject)
+          modulesToPick.push(componentObject)
         }
 
         if (fs.existsSync(path.join(dstScaffoldizerInstalledDir, dirEnt.name))) {
@@ -103,36 +98,45 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       }
     }
 
-    shortListChoices = shortListChoices
-      .filter(choice => !installedModules[choice.value] || choice.component)
+    modulesToPick = modulesToPick
+      // .filter(choice => !installedModules[choice.value])
       // .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
+      .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
       .sort((a, b) => Number(a.shortListPosition) - Number(b.shortListPosition))
 
-    choices = choices
+    componentsToPick = componentsToPick
       // .filter(choice => Number(choice.position) !== -1)
-      .map(choice => { return { ...choice, disabled: installedModules[choice.value] } })
       .sort((a, b) => Number(a.position) - Number(b.position))
 
-    actualShortListChoices = shortListChoices.filter(choice => !choice.disabled)
+    const choice = (await prompts({
+      type: 'select',
+      name: 'value',
+      message: 'Chose what you want to add',
+      choices: [
+        {
+          title: 'Reinstallable components',
+          value: 'components'
+        },
+        {
+          title: 'Underlying module',
+          value: 'modules'
+        }
+      ]
+    }, { onCancel: onPromptCancel })).value
 
-    if (actualShortListChoices.length) {
+    if (choice === 'components') {
       modules = (await prompts({
         type: 'select',
         name: 'value',
-        message: 'pick a module to install',
-        choices: [...shortListChoices, {
-          title: 'Pick individual modules',
-          value: '__INDIVIDUAL__'
-        }]
+        message: 'Pick a component to add',
+        choices: componentsToPick
       }, { onCancel: onPromptCancel })).value
-    }
-
-    if (modules === '__INDIVIDUAL__' || !actualShortListChoices.length) {
+    } else {
       modules = (await prompts({
         type: 'multiselect',
         name: 'value',
-        message: 'pick a module to install',
-        choices
+        message: 'Pick several moduless to install',
+        choices: modulesToPick
       }, { onCancel: onPromptCancel })).value
     }
   }
@@ -141,7 +145,13 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
   if (!modules.length) {
     console.log('Nothing to install, quitting...')
   } else {
-    for (const module of modules) await installModule(module)
+    for (const module of modules) {
+      const $r = await installModule(module)
+      if ($r === false) {
+        console.log('Installation failed, quitting...')
+        process.exit(1)
+      }
+    }
   }
 
   async function installModule (module) {
@@ -163,9 +173,15 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
 
     const deps = moduleJson5Values.moduleDependencies || []
     if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
+
     for (const module of deps) {
-      await installModule(module)
+      const $r = await installModule(module)
+      if ($r === false) {
+        console.log('Installation failed, quitting...')
+        process.exit(1)
+      }
     }
+
     if (verbose && deps.length) console.log('Dependencies installed.', deps)
 
     const config = {
@@ -210,11 +226,15 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
     // Install dependendencies first
 
     userInput[module] = {}
-    if (moduleCodeFunctions.prePrompts) moduleCodeFunctions.prePrompts(config)
+    if (moduleCodeFunctions.prePrompts) {
+      const $r = await moduleCodeFunctions.prePrompts(config)
+      if ($r === false) return false
+    }
 
     if (moduleCodeFunctions.getPrompts) {
-      // Note: getPrompts might set values in  userInput[module] progrfammatically
+      // Note: getPrompts might set values in  userInput[module] programmatically
       const $p = moduleCodeFunctions.getPrompts(config)
+      if ($p === false) return false
       let $h
       if (moduleCodeFunctions.getPromptsHeading) $h = moduleCodeFunctions.getPromptsHeading()
       if ($h) console.log(`\n${$h}\n`)
@@ -223,30 +243,45 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       userInput[module] = { ...userInput[module], ...answers }
     }
 
+    if (moduleCodeFunctions.postPrompts) {
+      const $r = await moduleCodeFunctions.postPrompts(config)
+      if ($r === false) return false
+    }
+
+    // Run the preAdd hook if defined
+
+    if (moduleCodeFunctions.preAdd) {
+      const $r = await moduleCodeFunctions.preAdd(config)
+      if ($r === false) return false
+    }
+
     // Run the boot function. This is run even if the module is already
     // installed. However, if the module is NOT already installed, it's
     // also run
-    if (moduleCodeFunctions.boot) await moduleCodeFunctions.boot(config)
-
-    // Run the preAdd hook if defined
-    if (moduleCodeFunctions.preAdd) await moduleCodeFunctions.preAdd(config)
+    if (moduleCodeFunctions.boot) {
+      const $r = await moduleCodeFunctions.boot(config)
+      if ($r === false) return false
+    }
 
     const moduleDistrDir = path.join(moduleDir, 'distr')
     if (utils.isDir(moduleDistrDir)) {
       if (verbose) console.log('"distr" folder found, copying files over')
-      utils.copyRecursiveSync(moduleDistrDir, dstDir, config)
+      utils.copyRecursiveSync(config, moduleDistrDir, dstDir)
     }
 
     // Execute on requested inserts in destination files
     const manipulations = moduleJson5Values.manipulate || {}
-    await config.utils.executeManipulations(manipulations, config)
+    await config.utils.executeManipulations(config, manipulations)
 
     if (!moduleJson5Values.component) {
       // Mark it as installed in metadata (create lock file)
       fs.writeJsonSync(moduleInstallFile, userInput[module])
     }
 
-    if (moduleCodeFunctions.postAdd) await moduleCodeFunctions.postAdd(config)
+    if (moduleCodeFunctions.postAdd) {
+      const $r = await moduleCodeFunctions.postAdd(config)
+      if ($r === false) return false
+    }
 
     // Module installed!
     if (verbose) console.log('Module installed:', module)
