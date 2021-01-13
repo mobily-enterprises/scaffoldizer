@@ -269,6 +269,15 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       utils.copyRecursiveSync(config, moduleDistrDir, dstDir)
     }
 
+    // Copy the "extraCopyDirectory" files, if module says so
+    if (moduleJson5Values.extraCopyDirectory) {
+      const commonDir = path.join(scaffoldDir, moduleJson5Values.extraCopyDirectory)
+      if (utils.isDir(commonDir)) {
+        if (verbose) console.log('Extra copy directory found, copying files over')
+        utils.copyRecursiveSync(config, commonDir, dstDir)
+      }
+    }
+
     // Execute on requested inserts in destination files
     const manipulations = moduleJson5Values.manipulate || {}
     await config.utils.executeManipulations(config, manipulations)
