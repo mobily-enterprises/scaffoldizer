@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const { program } = require('commander')
 const scaffoldizerPackageJson = require('../package.json')
-const commands = require('../commands')
+const add = require('../commands/add.js').add
 
 const increaseVerbosity = (dummyValue, previous) => previous++
 
@@ -20,7 +20,7 @@ async function main () {
   program.command('add [modules...]')
     .description('Add scaffold modules to the destination. If no module is specified, a user interface will launch.')
     .action(modules => {
-      commands.add(program.scaffold, program.destination, modules)
+      add(program.scaffold, program.destination, modules)
     })
 
   await program.parseAsync(process.argv)
