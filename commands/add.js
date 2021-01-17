@@ -5,8 +5,17 @@ const prompts = require('prompts')
 const { program } = require('commander')
 const JSON5 = require('json5')
 
-exports = module.exports = async (scaffold, dstDir, modules) => {
-  const verbose = program.verbose
+const onPromptCancel = (prompt) => {
+  console.error('Aborting...')
+  process.exit(1)
+}
+
+/*
+ * **************************************************************
+ * Add function (UI)
+ * **************************************************************
+ */
+exports.add = async (scaffold, dstDir, modules) => {
   // Destination directory must exist
   if (!utils.isDir(dstDir)) {
     console.error('Could not find destination dir:', dstDir)
@@ -49,11 +58,6 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
   fs.ensureDirSync(dstScaffoldizerInstalledDir)
   const dstScaffoldizerRemotesDir = path.join(dstScaffoldizerDir, 'remoteScaffolds')
   fs.ensureDirSync(dstScaffoldizerRemotesDir)
-
-  const onPromptCancel = (prompt) => {
-    console.error('Aborting...')
-    process.exit(1)
-  }
 
   const userInput = {}
   const vars = {}
@@ -145,48 +149,7 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
   if (!modules.length) {
     console.log('Nothing to install, quitting...')
   } else {
-    for (const module of modules) {
-      const $r = await installModule(module)
-      if ($r === false) {
-        console.log('Installation failed, quitting...')
-        process.exit(1)
-      }
-    }
-  }
-
-  async function installModule (module) {
-    const moduleDir = path.join(scaffoldDir, 'modules', module)
-    const moduleInstallFile = path.join(dstScaffoldizerInstalledDir, module)
-
-    // Check if module is available
-    if (!utils.isDir(moduleDir)) {
-      console.log(`FATAL: Kit not found: ${module}`)
-      process.exit(1)
-    }
-
-    const moduleJson5 = path.join(moduleDir, 'module.json5')
-    if (!fs.existsSync(moduleJson5)) {
-      console.log(`FATAL: Module is missing the module.json5 file: ${module}`)
-      process.exit(1)
-    }
-    const moduleJson5Values = JSON5.parse(fs.readFileSync(moduleJson5, 'utf-8'))
-
-    const deps = moduleJson5Values.moduleDependencies || []
-    if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
-
-    for (const module of deps) {
-      const $r = await installModule(module)
-      if ($r === false) {
-        console.log('Installation failed, quitting...')
-        process.exit(1)
-      }
-    }
-
-    if (verbose && deps.length) console.log('Dependencies installed.', deps)
-
     const config = {
-      moduleDir,
-      moduleInstallFile,
       dstDir,
       dstScaffoldizerDir,
       dstScaffoldizerInstalledDir,
@@ -194,43 +157,94 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       dstPackageJsonValues,
       scaffoldPackageJsonValues,
       scaffoldUtilsFunctions,
-      moduleJson5Values,
       userInput,
       utils,
+      scaffoldDir,
       vars
     }
 
-    // Include code
-    const moduleCode = path.join(moduleDir, 'code.js')
-    let moduleCodeFunctions = {}
-    if (fs.existsSync(moduleCode)) {
-      moduleCodeFunctions = require(path.resolve(moduleCode))
+    for (const module of modules) {
+      const $r = await installModule(module, config, false)
+      if ($r === false) {
+        console.log('Installation failed, quitting...')
+        process.exit(1)
+      }
     }
-    config.moduleCodeFunctions = moduleCodeFunctions
+  }
+}
 
-    // Check if module is already installed
-    if (fs.existsSync(moduleInstallFile)) {
-      if (verbose) console.log(`${module} already installed, skipping...`)
+const installModule = exports.installModule = async (module, config, programmatically = false) => {
+  const moduleDir = path.join(config.scaffoldDir, 'modules', module)
+  const moduleInstallFile = path.join(config.dstScaffoldizerInstalledDir, module)
+  const verbose = program.verbose
 
-      // Use the install file as source of the user input provided at
-      // installation time
-      userInput[module] = fs.readJsonSync(moduleInstallFile)
+  // Check if module is available
+  if (!utils.isDir(moduleDir)) {
+    console.log(`FATAL: Kit not found: ${module}`)
+    process.exit(1)
+  }
 
-      // Run the boot function
-      if (moduleCodeFunctions.boot) moduleCodeFunctions.boot(config)
-      return
+  const moduleJson5 = path.join(moduleDir, 'module.json5')
+  if (!fs.existsSync(moduleJson5)) {
+    console.log(`FATAL: Module is missing the module.json5 file: ${module}`)
+    process.exit(1)
+  }
+  const moduleJson5Values = JSON5.parse(fs.readFileSync(moduleJson5, 'utf-8'))
+
+  const deps = moduleJson5Values.moduleDependencies || []
+  if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
+
+  for (const module of deps) {
+    const $r = await installModule(module, config)
+    if ($r === false) {
+      console.log('Installation failed, quitting...')
+      process.exit(1)
     }
+  }
 
-    console.log(`Installing ${module}`)
+  if (verbose && deps.length) console.log('Dependencies installed.', deps)
 
-    // Install dependendencies first
+  const c = config = {
+    ...config,
+    moduleJson5Values,
+    moduleDir,
+    moduleInstallFile
+  }
 
-    userInput[module] = {}
-    if (moduleCodeFunctions.prePrompts) {
-      const $r = await moduleCodeFunctions.prePrompts(config)
-      if ($r === false) return false
-    }
+  // Include code
+  const moduleCode = path.join(moduleDir, 'code.js')
+  let moduleCodeFunctions = {}
+  if (fs.existsSync(moduleCode)) {
+    moduleCodeFunctions = require(path.resolve(moduleCode))
+  }
+  config.moduleCodeFunctions = moduleCodeFunctions
 
+  // Check if module is already installed
+  if (fs.existsSync(moduleInstallFile)) {
+    if (verbose) console.log(`${module} already installed, skipping...`)
+
+    // Use the install file as source of the user input provided at
+    // installation time
+    c.userInput[module] = fs.readJsonSync(moduleInstallFile)
+
+    // Run the boot function
+    if (moduleCodeFunctions.boot) moduleCodeFunctions.boot(config)
+    return
+  }
+
+  console.log(`Installing ${module}`)
+
+  // Install dependendencies first
+
+  c.userInput[module] = {}
+  if (moduleCodeFunctions.prePrompts) {
+    const $r = await moduleCodeFunctions.prePrompts(config)
+    if ($r === false) return false
+  }
+
+  if (programmatically) {
+    c.userInput[module] = programmatically
+  } else {
     if (moduleCodeFunctions.getPrompts) {
       // Note: getPrompts might set values in  userInput[module] programmatically
       const $p = moduleCodeFunctions.getPrompts(config)
@@ -240,59 +254,60 @@ exports = module.exports = async (scaffold, dstDir, modules) => {
       if ($h) console.log(`\n${$h}\n`)
 
       const answers = await prompts($p, { onCancel: onPromptCancel })
-      userInput[module] = { ...userInput[module], ...answers }
+      c.userInput[module] = { ...c.userInput[module], ...answers }
+      // console.log(answers)
     }
-
-    if (moduleCodeFunctions.postPrompts) {
-      const $r = await moduleCodeFunctions.postPrompts(config)
-      if ($r === false) return false
-    }
-
-    // Run the preAdd hook if defined
-
-    if (moduleCodeFunctions.preAdd) {
-      const $r = await moduleCodeFunctions.preAdd(config)
-      if ($r === false) return false
-    }
-
-    // Run the boot function. This is run even if the module is already
-    // installed. However, if the module is NOT already installed, it's
-    // also run
-    if (moduleCodeFunctions.boot) {
-      const $r = await moduleCodeFunctions.boot(config)
-      if ($r === false) return false
-    }
-
-    const moduleDistrDir = path.join(moduleDir, 'distr')
-    if (utils.isDir(moduleDistrDir)) {
-      if (verbose) console.log('"distr" folder found, copying files over')
-      utils.copyRecursiveSync(config, moduleDistrDir, dstDir)
-    }
-
-    // Copy the "extraCopyDirectory" files, if module says so
-    if (moduleJson5Values.extraCopyDirectory) {
-      const commonDir = path.join(scaffoldDir, moduleJson5Values.extraCopyDirectory)
-      if (utils.isDir(commonDir)) {
-        if (verbose) console.log('Extra copy directory found, copying files over')
-        utils.copyRecursiveSync(config, commonDir, dstDir)
-      }
-    }
-
-    // Execute on requested inserts in destination files
-    const manipulations = moduleJson5Values.manipulate || {}
-    await config.utils.executeManipulations(config, manipulations)
-
-    if (!moduleJson5Values.component) {
-      // Mark it as installed in metadata (create lock file)
-      fs.writeJsonSync(moduleInstallFile, userInput[module])
-    }
-
-    if (moduleCodeFunctions.postAdd) {
-      const $r = await moduleCodeFunctions.postAdd(config)
-      if ($r === false) return false
-    }
-
-    // Module installed!
-    if (verbose) console.log('Module installed:', module)
   }
+
+  if (moduleCodeFunctions.postPrompts) {
+    const $r = await moduleCodeFunctions.postPrompts(config)
+    if ($r === false) return false
+  }
+
+  // Run the preAdd hook if defined
+
+  if (moduleCodeFunctions.preAdd) {
+    const $r = await moduleCodeFunctions.preAdd(config)
+    if ($r === false) return false
+  }
+
+  // Run the boot function. This is run even if the module is already
+  // installed. However, if the module is NOT already installed, it's
+  // also run
+  if (moduleCodeFunctions.boot) {
+    const $r = await moduleCodeFunctions.boot(config)
+    if ($r === false) return false
+  }
+
+  const moduleDistrDir = path.join(moduleDir, 'distr')
+  if (utils.isDir(moduleDistrDir)) {
+    if (verbose) console.log('"distr" folder found, copying files over')
+    utils.copyRecursiveSync(config, moduleDistrDir, c.dstDir)
+  }
+
+  // Copy the "extraCopyDirectory" files, if module says so
+  if (moduleJson5Values.extraCopyDirectory) {
+    const commonDir = path.join(c.scaffoldDir, moduleJson5Values.extraCopyDirectory)
+    if (utils.isDir(commonDir)) {
+      if (verbose) console.log('Extra copy directory found, copying files over')
+      utils.copyRecursiveSync(config, commonDir, c.dstDir)
+    }
+  }
+
+  // Execute on requested inserts in destination files
+  const manipulations = moduleJson5Values.manipulate || {}
+  await config.utils.executeManipulations(config, manipulations)
+
+  if (!moduleJson5Values.component) {
+    // Mark it as installed in metadata (create lock file)
+    fs.writeJsonSync(moduleInstallFile, c.userInput[module])
+  }
+
+  if (moduleCodeFunctions.postAdd) {
+    const $r = await moduleCodeFunctions.postAdd(config)
+    if ($r === false) return false
+  }
+
+  // Module installed!
+  if (verbose) console.log('Module installed:', module)
 }
