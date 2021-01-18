@@ -2,6 +2,7 @@
 const { program } = require('commander')
 const scaffoldizerPackageJson = require('../package.json')
 const add = require('../commands/add.js').add
+const run = require('../commands/add.js').run
 
 const increaseVerbosity = (dummyValue, previous) => previous++
 
@@ -21,6 +22,12 @@ async function main () {
     .description('Add scaffold modules to the destination. If no module is specified, a user interface will launch.')
     .action(modules => {
       add(program.scaffold, program.destination, modules)
+    })
+
+  program.command('run [scripts]')
+    .description('Run a scaffold script on the destination. If no script is specified, a user interface will launch.')
+    .action(script => {
+      run(program.scaffold, program.destination, script)
     })
 
   await program.parseAsync(process.argv)
