@@ -15,8 +15,8 @@ async function main () {
 
   // The main command: add
   program.option('-v, --verbose', 'verbosity that can be increased', increaseVerbosity, 0)
-  program.option('-s, --scaffold <scaffold>', '(Required) Scaffold to use. It can be an NPM module or a local directory.')
-  program.option('-d, --destination <destination>', '(Required) Destination project. It must contain a package.json file')
+  program.requiredOption('-s, --scaffold <scaffold>', '(Required) Scaffold to use. It can be an NPM module or a local directory.')
+  program.requiredOption('-d, --destination <destination>', '(Required) Destination project. It must contain a package.json file')
 
   program.command('add [modules...]')
     .description('Add scaffold modules to the destination. If no module is specified, a user interface will launch.')
