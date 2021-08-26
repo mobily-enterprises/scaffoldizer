@@ -56,8 +56,8 @@ exports.add = async (scaffold, dstDir, modules) => {
   fs.ensureDirSync(dstScaffoldizerDir)
   const dstScaffoldizerInstalledDir = path.join(dstScaffoldizerDir, 'installedModules')
   fs.ensureDirSync(dstScaffoldizerInstalledDir)
-  const dstScaffoldizerRemotesDir = path.join(dstScaffoldizerDir, 'remoteScaffolds')
-  fs.ensureDirSync(dstScaffoldizerRemotesDir)
+  // const dstScaffoldizerRemotesDir = path.join(dstScaffoldizerDir, 'remoteScaffolds')
+  // fs.ensureDirSync(dstScaffoldizerRemotesDir)
 
   const userInput = {}
   const vars = {}
@@ -153,7 +153,7 @@ exports.add = async (scaffold, dstDir, modules) => {
       dstDir,
       dstScaffoldizerDir,
       dstScaffoldizerInstalledDir,
-      dstScaffoldizerRemotesDir,
+      // dstScaffoldizerRemotesDir,
       dstPackageJsonValues,
       scaffoldPackageJsonValues,
       scaffoldUtilsFunctions,

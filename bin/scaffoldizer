@@ -2,7 +2,7 @@
 const { program } = require('commander')
 const scaffoldizerPackageJson = require('../package.json')
 const add = require('../commands/add.js').add
-const run = require('../commands/add.js').run
+const run = require('../commands/run.js').run
 
 const increaseVerbosity = (dummyValue, previous) => previous++
 
