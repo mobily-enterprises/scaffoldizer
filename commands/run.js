@@ -16,6 +16,8 @@ const onPromptCancel = (prompt) => {
  * **************************************************************
  */
 exports.run = async (scaffold, dstDir, script) => {
+  let config
+
   // Destination directory must exist
   if (!utils.isDir(dstDir)) {
     console.error('Could not find destination dir:', dstDir)
@@ -90,55 +92,62 @@ exports.run = async (scaffold, dstDir, script) => {
       choices: scriptsToPick
     }, { onCancel: onPromptCancel })).value
 
-    let config = {
+    config = {
       dstDir,
       dstScaffoldizerDir,
       dstScaffoldizerInstalledDir,
       dstPackageJsonValues,
       scaffoldPackageJsonValues,
       scaffoldUtilsFunctions,
-      utils,
+      scaffoldizerUtils: utils,
       scaffoldDir,
       vars
     }
+  }
+  runScript(script, config)
+}
 
-    const scriptDir = path.join(config.scaffoldDir, 'scripts', script)
-    const verbose = program.verbose
+const runScript = exports.runScript = async (script, config, programmatically) => {
+  const scriptDir = path.join(config.scaffoldDir, 'scripts', script)
+  const verbose = program.verbose
 
-    // Check if module is available
-    if (!utils.isDir(scriptDir)) {
-      console.log(`FATAL: Script not found: ${script}`)
-      process.exit(1)
-    }
+  // Check if module is available
+  if (!utils.isDir(scriptDir)) {
+    console.log(`FATAL: Script not found: ${script}`)
+    process.exit(1)
+  }
 
-    const scriptJson5 = path.join(scriptDir, 'script.json5')
-    if (!fs.existsSync(scriptJson5)) {
-      console.log(`FATAL: Module is missing the module.json5 file: ${script}`)
-      process.exit(1)
-    }
-    const scriptJson5Values = JSON5.parse(fs.readFileSync(scriptJson5, 'utf-8'))
+  const scriptJson5 = path.join(scriptDir, 'script.json5')
+  if (!fs.existsSync(scriptJson5)) {
+    console.log(`FATAL: Module is missing the module.json5 file: ${script}`)
+    process.exit(1)
+  }
+  const scriptJson5Values = JSON5.parse(fs.readFileSync(scriptJson5, 'utf-8'))
 
-    config = {
-      ...config,
-      scriptDir,
-      scriptJson5,
-      scriptJson5Values
-    }
+  config = {
+    ...config,
+    scriptDir,
+    scriptJson5,
+    scriptJson5Values
+  }
 
-    // Include code
-    const scriptCode = path.join(scriptDir, 'code.js')
-    let scriptCodeFunctions = {}
-    if (fs.existsSync(scriptCode)) {
-      scriptCodeFunctions = require(path.resolve(scriptCode))
-    }
-    config.scriptCodeFunctions = scriptCodeFunctions
+  // Include code
+  const scriptCode = path.join(scriptDir, 'code.js')
+  let scriptCodeFunctions = {}
+  if (fs.existsSync(scriptCode)) {
+    scriptCodeFunctions = require(path.resolve(scriptCode))
+  }
+  config.scriptCodeFunctions = scriptCodeFunctions
 
-    let userInput = {}
-    if (scriptCodeFunctions.prePrompts) {
-      const $r = await scriptCodeFunctions.prePrompts(config)
-      if ($r === false) return false
-    }
+  config.userInput = {}
+  if (scriptCodeFunctions.prePrompts) {
+    const $r = await scriptCodeFunctions.prePrompts(config)
+    if ($r === false) return false
+  }
 
+  if (programmatically) {
+    config.userInput[script] = programmatically
+  } else {
     if (scriptCodeFunctions.getPrompts) {
       if (verbose) console.log('Getting script prompts.')
       // Note: getPrompts might set values in  userInput[module] programmatically
@@ -149,11 +158,9 @@ exports.run = async (scaffold, dstDir, script) => {
       if ($h) console.log(`\n${$h}\n`)
 
       const answers = await prompts($p, { onCancel: onPromptCancel })
-      userInput = answers
+      config.userInput[script] = answers
     }
-    config.userInput = userInput
-
-    if (verbose) console.log(`Running ${script} ${config}...`)
-    scriptCodeFunctions.script(config)
   }
+  if (verbose) console.log(`Running ${script} ${config}...`)
+  scriptCodeFunctions.script(config)
 }

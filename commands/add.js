@@ -158,7 +158,7 @@ exports.add = async (scaffold, dstDir, modules) => {
       scaffoldPackageJsonValues,
       scaffoldUtilsFunctions,
       userInput,
-      utils,
+      scaffoldizerUtils: utils,
       scaffoldDir,
       vars
     }
@@ -296,7 +296,7 @@ const installModule = exports.installModule = async (module, config, programmati
 
   // Execute on requested inserts in destination files
   const manipulations = moduleJson5Values.manipulate || {}
-  await config.utils.executeManipulations(config, manipulations)
+  await utils.executeManipulations(config, manipulations)
 
   if (!moduleJson5Values.component) {
     // Mark it as installed in metadata (create lock file)
