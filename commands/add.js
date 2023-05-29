@@ -4,6 +4,8 @@ const utils = require('../lib/utils')
 const prompts = require('prompts')
 const { program } = require('commander')
 const JSON5 = require('json5')
+const log = require('debug')('logs')
+
 
 const onPromptCancel = (prompt) => {
   console.error('Aborting...')
@@ -178,6 +180,7 @@ const installModule = exports.installModule = async (module, config, programmati
   const moduleInstallFile = path.join(config.dstScaffoldizerInstalledDir, module)
   const verbose = program.verbose
 
+  log('Adding modiule', module, programmatically ? ' programmatically' : '')
   // Check if module is available
   if (!utils.isDir(moduleDir)) {
     console.log(`FATAL: Kit not found: ${module}`)

@@ -24,7 +24,7 @@ async function main () {
       add(program.scaffold, program.destination, modules)
     })
 
-  program.command('run [scripts]')
+  program.command('run [script]')
     .description('Run a scaffold script on the destination. If no script is specified, a user interface will launch.')
     .action(script => {
       run(program.scaffold, program.destination, script)
