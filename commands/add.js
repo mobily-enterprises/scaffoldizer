@@ -198,7 +198,7 @@ const installModule = exports.installModule = async (module, config, programmati
   if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
 
   for (const module of deps) {
-    const $r = await installModule(module, config)
+    const $r = await installModule(module, config ) 
     if ($r === false) {
       console.log('Installation failed, quitting...')
       process.exit(1)
@@ -241,32 +241,25 @@ const installModule = exports.installModule = async (module, config, programmati
 
   c.userInput[module] = {}
   if (moduleCodeFunctions.prePrompts) {
-    const $r = await moduleCodeFunctions.prePrompts(config)
-    if ($r === false) return false
+    await moduleCodeFunctions.prePrompts(config)
   }
 
-  if (programmatically) {
-    c.userInput[module] = programmatically
+  if (programmatically) {    
+    c.userInput[module] = programmatically || {}
+    console.log('Answers came programmatically:', c.userInput[module])
   } else {
-    if (moduleCodeFunctions.getPrompts) {
-      // Note: getPrompts might set values in  userInput[module] programmatically
-      const $p = moduleCodeFunctions.getPrompts(config)
-      if ($p === false) return false
-      let $h
+    if (moduleCodeFunctions.getPrompts) {     
       if (moduleCodeFunctions.getPromptsHeading) $h = moduleCodeFunctions.getPromptsHeading()
       if ($h) console.log(`\n${$h}\n`)
-
-      const answers = await prompts($p, { onCancel: onPromptCancel })
-      c.userInput[module] = { ...c.userInput[module], ...answers }
-      // console.log(answers)
+      c.userInput[module] = await moduleCodeFunctions.getPrompts(config) || {}
+      console.log('Answers came from prompts:', c.userInput[module])
     }
   }
 
   if (moduleCodeFunctions.postPrompts) {
-    const $r = await moduleCodeFunctions.postPrompts(config)
-    if ($r === false) return false
+    await moduleCodeFunctions.postPrompts(config, c.userInput[module])
   }
-
+  
   // Run the preAdd hook if defined
 
   if (moduleCodeFunctions.preAdd) {
