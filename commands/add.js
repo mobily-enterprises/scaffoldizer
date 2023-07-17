@@ -246,6 +246,7 @@ const installModule = exports.installModule = async (module, config, programmati
 
   if (programmatically) {    
     c.userInput[module] = programmatically || {}
+    c.programmatically = true
     console.log('Answers came programmatically:', c.userInput[module])
   } else {
     if (moduleCodeFunctions.getPrompts) {     
@@ -254,6 +255,7 @@ const installModule = exports.installModule = async (module, config, programmati
       c.userInput[module] = await moduleCodeFunctions.getPrompts(config) || {}
       console.log('Answers came from prompts:', c.userInput[module])
     }
+    c.programmatically = false
   }
 
   if (moduleCodeFunctions.postPrompts) {
