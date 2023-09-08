@@ -1,6 +1,6 @@
 {
   "name": "scaffoldizer",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Modular scaffold creation",
   "bin": {
     "scaffoldizer": "./bin/scaffoldizer"
@@ -36,7 +36,7 @@
     "prompts": "^2.3.2",
     "recursive-copy": "^2.0.10",
     "replace-in-file": "^6.1.0",
-    "set-value": "^3.0.2",
+    "set-value": "^4.x.x",
     "system-commands": "^1.1.7",
     "unset-value": "^1.0.0"
   },
