@@ -23,12 +23,15 @@ exports.run = async (scaffold, dstDir, script) => {
     console.error('Could not find destination dir:', dstDir)
     process.exit(1)
   }
-  const dstPackageJson = path.join(dstDir, 'package.json')
+
+
+ const dstPackageJson = path.join(dstDir, 'package.json')
+  let dstPackageJsonValues
   if (!fs.pathExistsSync(dstPackageJson)) {
-    console.error('Destination directory must contain package.json')
-    process.exit(1)
+    dstPackageJsonValues = {}
+  } else {
+    dstPackageJsonValues = fs.readJsonSync(dstPackageJson)
   }
-  const dstPackageJsonValues = fs.readJsonSync(dstPackageJson)
 
   const scaffoldDir = await utils.resolveScaffold(scaffold, dstDir)
   if (!utils.isDir(scaffoldDir)) {
