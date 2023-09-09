@@ -143,25 +143,13 @@ const runScript = exports.runScript = async (script, config, programmatically) =
   config.scriptCodeFunctions = scriptCodeFunctions
 
   config.userInput = {}
-  if (scriptCodeFunctions.prePrompts) {
-    const $r = await scriptCodeFunctions.prePrompts(config)
-    if ($r === false) return false
-  }
-
   if (programmatically) {
     config.userInput[script] = programmatically
   } else {
     if (scriptCodeFunctions.getPrompts) {
       if (verbose) console.log('Getting script prompts.')
       // Note: getPrompts might set values in  userInput[module] programmatically
-      const $p = scriptCodeFunctions.getPrompts(config)
-      if ($p === false) return false
-      let $h
-      if (scriptCodeFunctions.getPromptsHeading) $h = scriptCodeFunctions.getPromptsHeading()
-      if ($h) console.log(`\n${$h}\n`)
-
-      const answers = await prompts($p, { onCancel: onPromptCancel })
-      config.userInput[script] = answers
+      config.userInput[script] = await scriptCodeFunctions.getPrompts(config) || {}
     }
   }
   if (verbose) console.log(`Running ${script} ${config}...`)
