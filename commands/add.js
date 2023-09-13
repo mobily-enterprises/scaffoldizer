@@ -75,9 +75,15 @@ exports.add = async (scaffold, dstDir, modules) => {
     const scaffoldModulesDir = path.join(scaffoldDir, 'modules')
     const moduleDirs = fs.readdirSync(scaffoldModulesDir, { withFileTypes: true })
     for (const dirEnt of moduleDirs) {
+      let moduleJson5Values
+      let fileToLoad
       if (dirEnt.isDirectory()) {
-        // console.log(dirEnt.name)
-        const moduleJson5Values = JSON5.parse(fs.readFileSync(path.join(scaffoldModulesDir, dirEnt.name, 'module.json5'), 'utf8'))
+        try {
+          fileToLoad = path.join(scaffoldModulesDir, dirEnt.name, 'module.json5')
+          moduleJson5Values = JSON5.parse(fs.readFileSync(fileToLoad, 'utf8'))
+        } catch (e) {
+          console.log('Error with JSON5 in', fileToLoad, e)
+        }
         let dependencies = ''
         if (!moduleJson5Values.shortListed) {
           if (Array.isArray(moduleJson5Values.moduleDependencies) && moduleJson5Values.moduleDependencies.length) {
@@ -252,8 +258,7 @@ const installModule = exports.installModule = async (module, config, programmati
     console.log('Answers came programmatically:', c.userInput[module])
   } else {
     if (moduleCodeFunctions.getPrompts) {
-      if (moduleCodeFunctions.getPromptsHeading) $h = moduleCodeFunctions.getPromptsHeading()
-      if ($h) console.log(`\n${$h}\n`)
+      if (moduleCodeFunctions.getPromptsHeading) moduleCodeFunctions.getPromptsHeading()
       c.userInput[module] = await moduleCodeFunctions.getPrompts(config) || {}
       console.log('Answers came from prompts:', c.userInput[module])
     }
@@ -263,7 +268,7 @@ const installModule = exports.installModule = async (module, config, programmati
   if (moduleCodeFunctions.postPrompts) {
     await moduleCodeFunctions.postPrompts(config, c.userInput[module])
   }
-  
+
   // Run the preAdd hook if defined
 
   if (moduleCodeFunctions.preAdd) {
