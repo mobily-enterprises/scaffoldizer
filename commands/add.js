@@ -6,7 +6,6 @@ const { program } = require('commander')
 const JSON5 = require('json5')
 const log = require('debug')('logs')
 
-
 const onPromptCancel = (prompt) => {
   console.error('Aborting...')
   process.exit(1)
