@@ -271,7 +271,7 @@ const installModule = exports.installModule = async (module, config, programmati
   // Run the preAdd hook if defined
 
   if (moduleCodeFunctions.preAdd) {
-    const $r = await moduleCodeFunctions.preAdd(config)
+    const $r = await moduleCodeFunctions.preAdd(config, c.userInput[module])
     if ($r === false) return false
   }
 
@@ -279,7 +279,7 @@ const installModule = exports.installModule = async (module, config, programmati
   // installed. However, if the module is NOT already installed, it's
   // also run
   if (moduleCodeFunctions.boot) {
-    const $r = await moduleCodeFunctions.boot(config)
+    const $r = await moduleCodeFunctions.boot(config, c.userInput[module])
     if ($r === false) return false
   }
 
@@ -308,7 +308,7 @@ const installModule = exports.installModule = async (module, config, programmati
   }
 
   if (moduleCodeFunctions.postAdd) {
-    const $r = await moduleCodeFunctions.postAdd(config)
+    const $r = await moduleCodeFunctions.postAdd(config, c.userInput[module])
     if ($r === false) return false
   }
 
