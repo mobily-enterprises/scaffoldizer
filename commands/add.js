@@ -192,8 +192,6 @@ exports.add = async (scaffold, dstDir, modules) => {
     if (scaffoldCodeFunctions.landing) {
       await scaffoldCodeFunctions.landing(config, installedModules)
     }
-    
-  
   }
 }
 

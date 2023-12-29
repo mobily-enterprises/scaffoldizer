@@ -153,5 +153,5 @@ const runScript = exports.runScript = async (script, config, programmatically) =
     }
   }
   if (verbose) console.log(`Running ${script} ${config}...`)
-  scriptCodeFunctions.script(config)
+  await scriptCodeFunctions.script(config)
 }
