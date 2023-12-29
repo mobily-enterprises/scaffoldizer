@@ -172,20 +172,36 @@ exports.add = async (scaffold, dstDir, modules) => {
       vars
     }
 
+    const installedModules = []
     for (const module of modules) {
-      const $r = await installModule(module, config, false)
+      const $r = await installModule(module, config, false, installedModules)
       if ($r === false) {
         console.log('Installation failed, quitting...')
         process.exit(1)
       }
     }
+
+    // Run the final hook if present
+    const scaffoldCode = path.join(config.scaffoldDir, 'code.js')
+    let scaffoldFFunctions = {}
+    if (fs.existsSync(scaffoldCode)) {
+      scaffoldCodeFunctions = require(path.resolve(scaffoldCode))
+    }
+    config.scaffoldCodeFunctions = scaffoldCodeFunctions
+
+    if (scaffoldCodeFunctions.landing) {
+      await scaffoldCodeFunctions.landing(config, installedModules)
+    }
+    
+  
   }
 }
 
-const installModule = exports.installModule = async (module, config, programmatically = false) => {
+const installModule = exports.installModule = async (module, config, programmatically = false, installedModules = []) => {
   const moduleDir = path.join(config.scaffoldDir, 'modules', module)
   const moduleInstallFile = path.join(config.dstScaffoldizerInstalledDir, module)
   const verbose = program.verbose
+
 
   log('Adding modiule', module, programmatically ? ' programmatically' : '')
   // Check if module is available
@@ -205,7 +221,7 @@ const installModule = exports.installModule = async (module, config, programmati
   if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
 
   for (const module of deps) {
-    const $r = await installModule(module, config ) 
+    const $r = await installModule(module, config, programmatically, installedModules ) 
     if ($r === false) {
       console.log('Installation failed, quitting...')
       process.exit(1)
@@ -229,7 +245,7 @@ const installModule = exports.installModule = async (module, config, programmati
   }
   config.moduleCodeFunctions = moduleCodeFunctions
 
-  // Check if module is already installed
+  // Check if module is already installed, skip everything if it is
   if (fs.existsSync(moduleInstallFile)) {
     if (verbose) console.log(`${module} already installed, skipping...`)
 
@@ -241,6 +257,9 @@ const installModule = exports.installModule = async (module, config, programmati
     if (moduleCodeFunctions.boot) moduleCodeFunctions.boot(config)
     return
   }
+
+  // Add the current module to the total list of installed modules
+  installedModules.push({ module, moduleJson5Values, configCopy: JSON.parse(JSON.stringify(config)) })
 
   console.log(`Installing ${module}`)
 
@@ -254,12 +273,12 @@ const installModule = exports.installModule = async (module, config, programmati
   if (programmatically) {
     c.userInput[module] = programmatically || {}
     c.programmatically = true
-    console.log('Answers came programmatically:', c.userInput[module])
+    // console.log('Answers came programmatically:', c.userInput[module])
   } else {
     if (moduleCodeFunctions.getPrompts) {
       if (moduleCodeFunctions.getPromptsHeading) moduleCodeFunctions.getPromptsHeading()
       c.userInput[module] = await moduleCodeFunctions.getPrompts(config) || {}
-      console.log('Answers came from prompts:', c.userInput[module])
+      // console.log('Answers came from prompts:', c.userInput[module])
     }
     c.programmatically = false
   }
