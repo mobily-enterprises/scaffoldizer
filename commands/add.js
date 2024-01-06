@@ -201,7 +201,7 @@ const installModule = exports.installModule = async (module, config, programmati
   const verbose = program.verbose
 
 
-  log('Adding modiule', module, programmatically ? ' programmatically' : '')
+  if (verbose) log('Processing adding module', module, programmatically ? ' programmatically' : '')
   // Check if module is available
   if (!utils.isDir(moduleDir)) {
     console.log(`FATAL: Kit not found: ${module}`)
@@ -259,7 +259,7 @@ const installModule = exports.installModule = async (module, config, programmati
   // Add the current module to the total list of installed modules
   installedModules.push({ module, moduleJson5Values, configCopy: JSON.parse(JSON.stringify(config)) })
 
-  console.log(`Installing ${module}`)
+  console.log(`Actually installing ${module}...`)
 
   // Install dependendencies first
 
