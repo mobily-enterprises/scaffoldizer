@@ -83,6 +83,7 @@ exports.add = async (scaffold, dstDir, modules) => {
         } catch (e) {
           console.log('Error with JSON5 in', fileToLoad, e)
         }
+        if (moduleJson5Values.hidden) continue
         let dependencies = ''
         if (!moduleJson5Values.shortListed) {
           if (Array.isArray(moduleJson5Values.moduleDependencies) && moduleJson5Values.moduleDependencies.length) {
