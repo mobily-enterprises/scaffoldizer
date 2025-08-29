@@ -1,6 +1,6 @@
 {
   "name": "scaffoldizer",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Modular scaffold creation",
   "bin": {
     "scaffoldizer": "./bin/scaffoldizer"
