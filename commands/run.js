@@ -152,6 +152,11 @@ const runScript = exports.runScript = async (script, config, programmatically) =
       config.userInput[script] = await scriptCodeFunctions.getPrompts(config) || {}
     }
   }
+
+  if (scriptCodeFunctions.postPrompts) {
+    await scriptCodeFunctions.postPrompts(config, config.userInput[script])
+  }
+
   if (verbose) console.log(`Running ${script} ${config}...`)
   await scriptCodeFunctions.script(config)
 }
