@@ -1,8 +1,14 @@
 #!/usr/bin/env node
-const { program } = require('commander')
-const scaffoldizerPackageJson = require('../package.json')
-const add = require('../commands/add.js').add
-const run = require('../commands/run.js').run
+import { program } from 'commander'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+import { add } from '../commands/add.js'
+import { run } from '../commands/run.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const scaffoldizerPackageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'))
 
 const increaseVerbosity = (dummyValue, previous) => previous++
 

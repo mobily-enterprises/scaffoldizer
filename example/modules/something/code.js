@@ -1,8 +1,8 @@
-exports.getPromptsHeading = (config) => {
+export const getPromptsHeading = (config) => {
   return 'This module needs information'
 }
 
-exports.getPrompts = (config) => {
+export const getPrompts = (config) => {
   return {
     type: 'number',
     name: 'age',
@@ -11,14 +11,14 @@ exports.getPrompts = (config) => {
   }
 }
 
-exports.prePrompts = (config) => {
+export const prePrompts = (config) => {
   console.log('Pre prompts')
 }
 
-exports.preAdd = (config) => {
+export const preAdd = (config) => {
   console.log('Pre add')
 }
 
-exports.postAdd = (config) => {
+export const postAdd = (config) => {
   console.log('Post add')
 }

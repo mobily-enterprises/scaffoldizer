@@ -1,10 +1,13 @@
-const fs = require('fs-extra')
-const path = require('path')
-const utils = require('../lib/utils')
-const prompts = require('prompts')
-const { program } = require('commander')
-const JSON5 = require('json5')
-const log = require('debug')('logs')
+import fs from 'fs-extra'
+import path from 'path'
+import { pathToFileURL } from 'url'
+import * as utils from '../lib/utils.js'
+import prompts from 'prompts'
+import { program } from 'commander'
+import JSON5 from 'json5'
+import debugLib from 'debug'
+
+const log = debugLib('logs')
 
 const onPromptCancel = (prompt) => {
   console.error('Aborting...')
@@ -16,7 +19,7 @@ const onPromptCancel = (prompt) => {
  * Add function (UI)
  * **************************************************************
  */
-exports.add = async (scaffold, dstDir, modules) => {
+export const add = async (scaffold, dstDir, modules) => {
   // Destination directory must exist
   if (!utils.isDir(dstDir)) {
     console.error('Could not find destination dir:', dstDir)
@@ -46,7 +49,7 @@ exports.add = async (scaffold, dstDir, modules) => {
   const scaffoldUtilsSource = path.join(scaffoldDir, 'utils.js')
   let scaffoldUtilsFunctions = {}
   if (fs.existsSync(scaffoldUtilsSource)) {
-    scaffoldUtilsFunctions = require(path.resolve(scaffoldUtilsSource))
+    scaffoldUtilsFunctions = await import(pathToFileURL(path.resolve(scaffoldUtilsSource)).href)
   }
 
   if (!scaffoldPackageJsonValues.forScaffoldizer) {
@@ -184,9 +187,9 @@ exports.add = async (scaffold, dstDir, modules) => {
 
     // Run the final hook if present
     const scaffoldCode = path.join(config.scaffoldDir, 'code.js')
-    let scaffoldFFunctions = {}
+    let scaffoldCodeFunctions = {}
     if (fs.existsSync(scaffoldCode)) {
-      scaffoldCodeFunctions = require(path.resolve(scaffoldCode))
+      scaffoldCodeFunctions = await import(pathToFileURL(path.resolve(scaffoldCode)).href)
     }
     config.scaffoldCodeFunctions = scaffoldCodeFunctions
 
@@ -196,7 +199,7 @@ exports.add = async (scaffold, dstDir, modules) => {
   }
 }
 
-const installModule = exports.installModule = async (module, config, programmatically = false, installedModules = []) => {
+export const installModule = async (module, config, programmatically = false, installedModules = []) => {
   const moduleDir = path.join(config.scaffoldDir, 'modules', module)
   const moduleInstallFile = path.join(config.dstScaffoldizerInstalledDir, module)
   const verbose = program.verbose
@@ -240,7 +243,7 @@ const installModule = exports.installModule = async (module, config, programmati
   const moduleCode = path.join(moduleDir, 'code.js')
   let moduleCodeFunctions = {}
   if (fs.existsSync(moduleCode)) {
-    moduleCodeFunctions = require(path.resolve(moduleCode))
+    moduleCodeFunctions = await import(pathToFileURL(path.resolve(moduleCode)).href)
   }
   config.moduleCodeFunctions = moduleCodeFunctions
 

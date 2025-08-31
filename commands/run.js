@@ -1,9 +1,10 @@
-const fs = require('fs-extra')
-const path = require('path')
-const utils = require('../lib/utils')
-const prompts = require('prompts')
-const { program } = require('commander')
-const JSON5 = require('json5')
+import fs from 'fs-extra'
+import path from 'path'
+import { pathToFileURL } from 'url'
+import * as utils from '../lib/utils.js'
+import prompts from 'prompts'
+import { program } from 'commander'
+import JSON5 from 'json5'
 
 const onPromptCancel = (prompt) => {
   console.error('Aborting...')
@@ -15,7 +16,7 @@ const onPromptCancel = (prompt) => {
  * Add function (UI)
  * **************************************************************
  */
-exports.run = async (scaffold, dstDir, script) => {
+export const run = async (scaffold, dstDir, script) => {
   let config
 
   // Destination directory must exist
@@ -48,7 +49,7 @@ exports.run = async (scaffold, dstDir, script) => {
   const scaffoldUtilsSource = path.join(scaffoldDir, 'utils.js')
   let scaffoldUtilsFunctions = {}
   if (fs.existsSync(scaffoldUtilsSource)) {
-    scaffoldUtilsFunctions = require(path.resolve(scaffoldUtilsSource))
+    scaffoldUtilsFunctions = await import(pathToFileURL(path.resolve(scaffoldUtilsSource)).href)
   }
 
   if (!scaffoldPackageJsonValues.forScaffoldizer) {
@@ -110,7 +111,7 @@ exports.run = async (scaffold, dstDir, script) => {
   runScript(script, config)
 }
 
-const runScript = exports.runScript = async (script, config, programmatically) => {
+export const runScript = async (script, config, programmatically) => {
   const scriptDir = path.join(config.scaffoldDir, 'scripts', script)
   const verbose = program.verbose
 
@@ -138,7 +139,7 @@ const runScript = exports.runScript = async (script, config, programmatically) =
   const scriptCode = path.join(scriptDir, 'code.js')
   let scriptCodeFunctions = {}
   if (fs.existsSync(scriptCode)) {
-    scriptCodeFunctions = require(path.resolve(scriptCode))
+    scriptCodeFunctions = await import(pathToFileURL(path.resolve(scriptCode)).href)
   }
   config.scriptCodeFunctions = scriptCodeFunctions
 
