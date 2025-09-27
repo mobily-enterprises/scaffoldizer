@@ -108,7 +108,7 @@ export const run = async (scaffold, dstDir, script) => {
       vars
     }
   }
-  runScript(script, config)
+  await runScript(script, config)
 }
 
 export const runScript = async (script, config, programmatically) => {
