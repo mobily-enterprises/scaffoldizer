@@ -6,10 +6,10 @@ import { select } from '@inquirer/prompts'
 import { program } from 'commander'
 import JSON5 from 'json5'
 
-  const onPromptCancel = () => {
-    console.error('Aborting...')
-    process.exit(1)
-  }
+const onPromptCancel = () => {
+  console.error('Aborting...')
+  process.exit(1)
+}
 
 /*
  * **************************************************************
@@ -25,8 +25,7 @@ export const run = async (scaffold, dstDir, script) => {
     process.exit(1)
   }
 
-
- const dstPackageJson = path.join(dstDir, 'package.json')
+  const dstPackageJson = path.join(dstDir, 'package.json')
   let dstPackageJsonValues
   if (!fs.pathExistsSync(dstPackageJson)) {
     dstPackageJsonValues = {}

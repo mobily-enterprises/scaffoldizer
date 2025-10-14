@@ -9,10 +9,10 @@ import debugLib from 'debug'
 
 const log = debugLib('logs')
 
-  const onPromptCancel = () => {
-    console.error('Aborting...')
-    process.exit(1)
-  }
+const onPromptCancel = () => {
+  console.error('Aborting...')
+  process.exit(1)
+}
 
 /*
  * **************************************************************
@@ -199,7 +199,6 @@ export const installModule = async (module, config, programmatically = false, in
   const moduleInstallFile = path.join(config.dstScaffoldizerInstalledDir, module)
   const verbose = program.verbose
 
-
   if (verbose) log('Processing adding module', module, programmatically ? ' programmatically' : '')
   // Check if module is available
   if (!utils.isDir(moduleDir)) {
@@ -218,7 +217,7 @@ export const installModule = async (module, config, programmatically = false, in
   if (verbose && deps.length) console.log('This module has dependencies. Installing them.', deps)
 
   for (const module of deps) {
-    const $r = await installModule(module, config, programmatically, installedModules ) 
+    const $r = await installModule(module, config, programmatically, installedModules)
     if ($r === false) {
       console.log('Installation failed, quitting...')
       process.exit(1)
