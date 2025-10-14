@@ -1,6 +1,6 @@
 {
   "name": "scaffoldizer",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "description": "Modular scaffold creation",
   "type": "module",
   "bin": {
@@ -35,10 +35,7 @@
     "get-value": "^3.0.1",
     "json-stable-stringify": "^1.0.1",
     "json5": "^2.1.3",
-    
-    
     "set-value": "^4.x.x",
-    
     "unset-value": "^1.0.0"
   },
   "devDependencies": {
