@@ -1,13 +1,15 @@
 {
   "name": "scaffoldizer",
-  "version": "0.0.23",
+  "version": "0.0.26",
   "description": "Modular scaffold creation",
   "type": "module",
   "bin": {
     "scaffoldizer": "./bin/scaffoldizer"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -25,31 +27,26 @@
     "url": "https://github.com/mobily-enterprises/scaffoldizer/issues"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.8.4",
     "commander": "^6.0.0",
     "debug": "^4.3.4",
-    "ejs": "^3.1.5",
-    "escape-string-regexp": "^4.0.0",
+    "ejs": "^3.1.10",
     "fs-extra": "^11.3.0",
     "get-value": "^3.0.1",
     "json-stable-stringify": "^1.0.1",
     "json5": "^2.1.3",
-    "pkg-up": "^3.1.0",
-    "prompts": "^2.3.2",
-    "replace-in-file": "^6.1.0",
+    
+    
     "set-value": "^4.x.x",
-    "system-commands": "^1.1.7",
+    
     "unset-value": "^1.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.4.0",
-    "eslint-config-standard": "^14.1.1",
-    "eslint-plugin-html": "^6.0.2",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-lit": "^1.2.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "standard": "^14.3.4"
+    "eslint": "^9.37.0",
+    "neostandard": "^0.12.2"
+  },
+  "overrides": {
+    "brace-expansion": "^2.0.2"
   },
   "homepage": "https://github.com/mobily-enterprises/scaffoldizer#readme"
 }

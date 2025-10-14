@@ -2,14 +2,14 @@ import fs from 'fs-extra'
 import path from 'path'
 import { pathToFileURL } from 'url'
 import * as utils from '../lib/utils.js'
-import prompts from 'prompts'
+import { select } from '@inquirer/prompts'
 import { program } from 'commander'
 import JSON5 from 'json5'
 
-const onPromptCancel = (prompt) => {
-  console.error('Aborting...')
-  process.exit(1)
-}
+  const onPromptCancel = () => {
+    console.error('Aborting...')
+    process.exit(1)
+  }
 
 /*
  * **************************************************************
@@ -89,12 +89,12 @@ export const run = async (scaffold, dstDir, script) => {
 
     scriptsToPick = scriptsToPick.sort((a, b) => Number(a.position) - Number(b.position))
 
-    script = (await prompts({
-      type: 'select',
-      name: 'value',
-      message: 'Pick a script to run',
-      choices: scriptsToPick
-    }, { onCancel: onPromptCancel })).value
+    try {
+      script = await select({
+        message: 'Pick a script to run',
+        choices: scriptsToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled }))
+      })
+    } catch (e) { onPromptCancel() }
 
     config = {
       dstDir,

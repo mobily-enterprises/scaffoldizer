@@ -2,17 +2,17 @@ import fs from 'fs-extra'
 import path from 'path'
 import { pathToFileURL } from 'url'
 import * as utils from '../lib/utils.js'
-import prompts from 'prompts'
+import { select, checkbox } from '@inquirer/prompts'
 import { program } from 'commander'
 import JSON5 from 'json5'
 import debugLib from 'debug'
 
 const log = debugLib('logs')
 
-const onPromptCancel = (prompt) => {
-  console.error('Aborting...')
-  process.exit(1)
-}
+  const onPromptCancel = () => {
+    console.error('Aborting...')
+    process.exit(1)
+  }
 
 /*
  * **************************************************************
@@ -125,36 +125,31 @@ export const add = async (scaffold, dstDir, modules) => {
       // .filter(choice => Number(choice.position) !== -1)
       .sort((a, b) => Number(a.position) - Number(b.position))
 
-    const choice = (await prompts({
-      type: 'select',
-      name: 'value',
-      message: 'Chose what you want to add',
-      choices: [
-        {
-          title: 'Reinstallable components',
-          value: 'components'
-        },
-        {
-          title: 'Underlying module',
-          value: 'modules'
-        }
-      ]
-    }, { onCancel: onPromptCancel })).value
+    let choice
+    try {
+      choice = await select({
+        message: 'Chose what you want to add',
+        choices: [
+          { name: 'Reinstallable components', value: 'components' },
+          { name: 'Underlying module', value: 'modules' }
+        ]
+      })
+    } catch (e) { onPromptCancel() }
 
     if (choice === 'components') {
-      modules = (await prompts({
-        type: 'select',
-        name: 'value',
-        message: 'Pick a component to add',
-        choices: componentsToPick
-      }, { onCancel: onPromptCancel })).value
+      try {
+        modules = await select({
+          message: 'Pick a component to add',
+          choices: componentsToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled }))
+        })
+      } catch (e) { onPromptCancel() }
     } else {
-      modules = (await prompts({
-        type: 'multiselect',
-        name: 'value',
-        message: 'Pick several moduless to install',
-        choices: modulesToPick
-      }, { onCancel: onPromptCancel })).value
+      try {
+        modules = await checkbox({
+          message: 'Pick several modules to install',
+          choices: modulesToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled }))
+        })
+      } catch (e) { onPromptCancel() }
     }
   }
 
