@@ -91,7 +91,8 @@ export const run = async (scaffold, dstDir, script) => {
     try {
       script = await select({
         message: 'Pick a script to run',
-        choices: scriptsToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled }))
+        choices: scriptsToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled })),
+        pageSize: 15
       })
     } catch (e) { onPromptCancel() }
 

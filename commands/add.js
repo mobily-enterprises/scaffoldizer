@@ -132,7 +132,8 @@ export const add = async (scaffold, dstDir, modules) => {
         choices: [
           { name: 'Reinstallable components', value: 'components' },
           { name: 'Underlying module', value: 'modules' }
-        ]
+        ],
+        pageSize: 15
       })
     } catch (e) { onPromptCancel() }
 
@@ -140,14 +141,16 @@ export const add = async (scaffold, dstDir, modules) => {
       try {
         modules = await select({
           message: 'Pick a component to add',
-          choices: componentsToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled }))
+          choices: componentsToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled })),
+          pageSize: 15
         })
       } catch (e) { onPromptCancel() }
     } else {
       try {
         modules = await checkbox({
           message: 'Pick several modules to install',
-          choices: modulesToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled }))
+          choices: modulesToPick.map(c => ({ name: c.title || c.name || String(c.value), value: c.value, disabled: c.disabled })),
+          pageSize: 15
         })
       } catch (e) { onPromptCancel() }
     }
