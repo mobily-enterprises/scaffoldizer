@@ -64,15 +64,26 @@ export const run = async (scaffold, dstDir, script) => {
 
   const vars = {}
 
-  // No module passed: let the user decide
-  let scriptsToPick = []
+  // Build base config regardless of script selection path
+  config = {
+    dstDir,
+    dstScaffoldizerDir,
+    dstScaffoldizerInstalledDir,
+    dstPackageJsonValues,
+    scaffoldPackageJsonValues,
+    scaffoldUtilsFunctions,
+    scaffoldizerUtils: utils,
+    scaffoldDir,
+    vars
+  }
 
+  // No script passed: let the user decide interactively
   if (!script) {
+    let scriptsToPick = []
     const scaffoldScriptsDir = path.join(scaffoldDir, 'scripts')
     const scriptDirs = fs.readdirSync(scaffoldScriptsDir, { withFileTypes: true })
     for (const dirEnt of scriptDirs) {
       if (dirEnt.isDirectory()) {
-        // console.log(dirEnt.name)
         const scriptJson5Values = JSON5.parse(fs.readFileSync(path.join(scaffoldScriptsDir, dirEnt.name, 'script.json5'), 'utf8'))
 
         const componentObject = {
@@ -95,18 +106,6 @@ export const run = async (scaffold, dstDir, script) => {
         pageSize: 15
       })
     } catch (e) { onPromptCancel() }
-
-    config = {
-      dstDir,
-      dstScaffoldizerDir,
-      dstScaffoldizerInstalledDir,
-      dstPackageJsonValues,
-      scaffoldPackageJsonValues,
-      scaffoldUtilsFunctions,
-      scaffoldizerUtils: utils,
-      scaffoldDir,
-      vars
-    }
   }
   await runScript(script, config)
 }
